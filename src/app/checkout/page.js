@@ -1,0 +1,162 @@
+'use client';
+
+import { useCart } from '../../store/useCart';
+import { useState } from 'react';
+import Link from 'next/link';
+
+export default function Checkout() {
+  const items = useCart((state) => state.items);
+  const clearCart = useCart((state) => state.clearCart);
+
+  const YOUR_PHONE_NUMBER = '639068461463'; 
+
+  const deliveryDistances = [
+    { id: 'dist1', name: '0 - 3km (Kauswagan, Carmen, Bayabas, Patag)', fee: 50.00 },
+    { id: 'dist2', name: '3 - 6km (Divisoria, Macasandig, Lapasan, Iponan, Bulua)', fee: 80.00 },
+    { id: 'dist3', name: '6 - 10km (Gusa, Cugman, Balulang, Lumbia, Opol)', fee: 130.00 },
+    { id: 'dist4', name: '10km+ (Tablon, Agusan, Puerto, Bugo, El Salvador)', fee: 180.00 },
+  ];
+
+  const [formData, setFormData] = useState({
+    name: '',
+    address: '',
+    phone: '',
+    notes: ''
+  });
+  
+  const [selectedDistance, setSelectedDistance] = useState(deliveryDistances[0]);
+
+  const subtotal = items.reduce((sum, item) => sum + (Number(item.price) * item.quantity), 0);
+  const grandTotal = subtotal + selectedDistance.fee;
+
+  const handleOrder = (e) => {
+    e.preventDefault();
+
+    let message = `*NEW ORDER (ZT Trading)*\n\n`;
+    message += `*Name:* ${formData.name}\n`;
+    message += `*Address:* ${formData.address}\n`;
+    message += `*Distance/Area:* ${selectedDistance.name}\n`;
+    message += `*Phone:* ${formData.phone}\n`;
+    message += `*Notes:* ${formData.notes || 'None'}\n\n`;
+    message += `*Order Summary:*\n`;
+
+    items.forEach(item => {
+      message += `- ${item.quantity}x ${item.name} (₱${(item.price * item.quantity).toFixed(2)})\n`;
+    });
+
+    message += `\n*Subtotal:* ₱${subtotal.toFixed(2)}`;
+    message += `\n*Delivery Fee:* ₱${selectedDistance.fee.toFixed(2)}\n`;
+    message += `\n*GRAND TOTAL: ₱${grandTotal.toFixed(2)}*\n\n`;
+    message += `Payment: Cash on Delivery / GCash`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/${YOUR_PHONE_NUMBER}?text=${encodedMessage}`;
+
+    clearCart();
+    window.open(whatsappUrl, '_blank');
+    window.location.href = '/'; 
+  };
+
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
+        <h2 className="text-2xl font-black text-gray-900 mb-4">Your cart is empty!</h2>
+        <Link href="/" className="bg-gray-900 text-white px-6 py-3 rounded-lg font-bold">
+          Go back to shop
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-gray-50 py-12 px-6">
+      <div className="max-w-xl mx-auto">
+        <Link href="/" className="text-sm font-bold text-gray-500 mb-6 inline-block hover:text-gray-900">
+          ← Back to Shop
+        </Link>
+        
+        <h1 className="text-3xl font-black text-gray-900 mb-8">Checkout</h1>
+
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
+          <h2 className="font-bold text-lg mb-4 border-b pb-2">Order Summary</h2>
+          
+          {items.map(item => (
+            <div key={item.id} className="flex justify-between mb-2 text-sm text-gray-700">
+              <span>{item.quantity}x {item.name}</span>
+              <span className="font-medium">₱{(item.price * item.quantity).toFixed(2)}</span>
+            </div>
+          ))}
+          
+          <div className="mt-4 pt-4 border-t space-y-2">
+            <div className="flex justify-between text-sm text-gray-500 font-medium">
+              <span>Subtotal</span>
+              <span>₱{subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm text-gray-500 font-medium">
+              <span>Delivery Fee</span>
+              <span>₱{selectedDistance.fee.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between mt-2 pt-2 border-t font-black text-xl text-gray-900">
+              <span>Grand Total</span>
+              <span>₱{grandTotal.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleOrder} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+          <h2 className="font-bold text-lg mb-4">Delivery Details</h2>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Full Name</label>
+              <input required type="text" className="w-full border rounded-lg p-3" 
+                onChange={(e) => setFormData({...formData, name: e.target.value})} />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Select Delivery Distance</label>
+              <select 
+                className="w-full border rounded-lg p-3 bg-white font-medium text-gray-700"
+                onChange={(e) => {
+                  const distance = deliveryDistances.find(d => d.id === e.target.value);
+                  setSelectedDistance(distance);
+                }}
+              >
+                {deliveryDistances.map(dist => (
+                  <option key={dist.id} value={dist.id}>
+                    {dist.name} (+₱{dist.fee})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Complete Address (Street, House No.)</label>
+              <input required type="text" className="w-full border rounded-lg p-3" 
+                onChange={(e) => setFormData({...formData, address: e.target.value})} />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Contact Number</label>
+              <input required type="tel" className="w-full border rounded-lg p-3" 
+                onChange={(e) => setFormData({...formData, phone: e.target.value})} />
+            </div>
+            <div>
+              <label className="block text-sm font-bold text-gray-700 mb-1">Driver Notes (Optional)</label>
+              <input type="text" placeholder="e.g. Near the blue gate" className="w-full border rounded-lg p-3" 
+                onChange={(e) => setFormData({...formData, notes: e.target.value})} />
+            </div>
+          </div>
+
+          {/* NEW: The Disclaimer Notice */}
+          <div className="mt-6 bg-blue-50 border border-blue-100 text-blue-800 text-xs font-medium p-4 rounded-lg">
+            <strong>Notice:</strong> Exceptionally large bulk orders may be subject to 4-wheel vehicle delivery rates. We will contact you to confirm any adjustments before proceeding.
+          </div>
+
+          <button type="submit" className="w-full bg-gray-900 hover:bg-black text-white font-black text-lg p-4 rounded-xl mt-4 transition-colors">
+            Send Order via WhatsApp
+          </button>
+        </form>
+      </div>
+    </main>
+  );
+}
