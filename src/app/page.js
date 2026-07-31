@@ -3,6 +3,9 @@ import CartWidget from '../components/CartWidget';
 import ProductFeed from '../components/ProductFeed'; 
 import Link from 'next/link';
 
+
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   // We use a JOIN here to attach the actual category_name to every product
   const [products] = await pool.query(
