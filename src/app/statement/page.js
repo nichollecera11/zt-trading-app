@@ -44,7 +44,7 @@ export default function OfficialStatement() {
               <strong>Adogs Football Club</strong> deeply laments the passing of{" "}
               <strong>Gereme Valdez</strong>, a cherished player and beloved
               member of our local football family, who tragically lost his life
-              in a motorcycle accident yesterday.
+              in an accident yesterday.
             </p>
             <p>
               The club wishes to express its deepest condolences and its utmost
