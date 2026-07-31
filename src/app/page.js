@@ -28,7 +28,7 @@ export default async function Home() {
           href="/statement" 
           className="text-xs sm:text-sm font-bold tracking-wider uppercase hover:text-gray-300 transition-colors"
         >
-          Official Statement: The passing of [Member's Name] →
+          Official Statement: The passing of Gereme Valdez →
         </Link>
       </div>
 
