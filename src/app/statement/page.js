@@ -20,7 +20,7 @@ export default function OfficialStatement() {
             <img
               src="/images/new_logo.jpg"
               alt="Club Logo"
-              className="h-24 sm:h-32 w-auto object-contain grayscale contrast-150 brightness-75 opacity-85"
+              className="h-32 sm:h-48 w-auto object-contain opacity-90"
             />
           </div>
 
