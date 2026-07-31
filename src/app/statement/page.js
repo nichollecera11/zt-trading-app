@@ -6,12 +6,12 @@ export default function OfficialStatement() {
     <main className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6">
       <div className="max-w-3xl w-full">
         {/* Return Button */}
-        <Link
+        {/* <Link
           href="/"
           className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-8 inline-block hover:text-gray-900 transition-colors"
         >
           ← Return to Homepage
-        </Link>
+        </Link> */}
 
         {/* The Official Document Frame */}
         <div className="bg-white border-t-4 border-black pt-12 pb-20 px-8 sm:px-16 shadow-xl text-center">
