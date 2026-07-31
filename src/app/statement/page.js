@@ -17,7 +17,7 @@ export default function OfficialStatement() {
           {/* 📍 CLUB CREST / LOGO HERE */}
           <div className="flex justify-center mb-8">
             <img 
-              src="/images/new logo.jpg"  /* 👈 Update this path to your logo file in public/images */
+              src="/images/logo.jpg"  /* 👈 Update this path to your logo file in public/images */
               alt="Club Logo" 
               className="h-20 sm:h-24 w-auto object-contain grayscale opacity-90"
             />
