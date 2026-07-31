@@ -20,7 +20,7 @@ export default function OfficialStatement() {
             <img
               src="/images/new_logo.jpg"
               alt="Club Logo"
-              className="h-20 sm:h-24 w-auto object-contain grayscale opacity-90"
+              className="h-24 sm:h-32 w-auto object-contain grayscale contrast-150 brightness-75 opacity-85"
             />
           </div>
 
@@ -41,8 +41,8 @@ export default function OfficialStatement() {
           {/* Statement Body */}
           <div className="space-y-6 text-base sm:text-lg leading-relaxed text-gray-800 text-justify font-serif">
             <p>
-              <strong>[Your Club Name]</strong> deeply laments the passing of{" "}
-              <strong>[Member's Name]</strong>, a cherished player and beloved
+              <strong>Adogs Football Club</strong> deeply laments the passing of{" "}
+              <strong>Gereme Valdez</strong>, a cherished player and beloved
               member of our local football family, who tragically lost his life
               in a motorcycle accident yesterday.
             </p>
