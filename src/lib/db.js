@@ -1,5 +1,14 @@
 import mysql from 'mysql2/promise';
 
+
+console.log({
+  MYSQL_HOST: process.env.MYSQL_HOST,
+  MYSQL_PORT: process.env.MYSQL_PORT,
+  MYSQL_USER: process.env.MYSQL_USER,
+  MYSQL_DATABASE: process.env.MYSQL_DATABASE,
+});
+
+
 const pool = mysql.createPool({
   // This tells Next.js to check for MYSQL_HOST first, and if it can't find it, use DB_HOST
   host: process.env.MYSQL_HOST || process.env.DB_HOST,

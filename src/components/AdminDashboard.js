@@ -1,123 +1,315 @@
-'use client';
-
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+"use client";
+import { useState } from "react";
 
 export default function AdminDashboard({ allProducts }) {
-  const [pin, setPin] = useState('');
-  const [isUnlocked, setIsUnlocked] = useState(false);
-  const router = useRouter();
+  const [pin, setPin] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [products, setProducts] = useState(allProducts);
+  const [activeTab, setActiveTab] = useState("products");
 
-  // The secret passcode to access your dashboard
-  const SECRET_PIN = '1234';
+  // NEW: State for our Add Product Modal
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    price: "",
+    category_id: 1,
+  });
+
+  const SECRET_PIN = "1234";
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (pin === SECRET_PIN) {
-      setIsUnlocked(true);
-    } else {
-      alert('Incorrect PIN!');
-      setPin('');
+    if (pin === SECRET_PIN) setIsAuthenticated(true);
+    else alert("Incorrect PIN");
+  };
+
+  const updateProduct = async (id, newPrice, newStatus) => {
+    setProducts(
+      products.map((p) =>
+        p.id === id ? { ...p, price: newPrice, is_available: newStatus } : p,
+      ),
+    );
+    await fetch("/api/admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, price: newPrice, is_available: newStatus }),
+    });
+  };
+
+  // NEW: Function to handle adding a product
+  const handleAddProduct = async (e) => {
+    e.preventDefault();
+    const res = await fetch("/api/admin/add", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newProduct),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      // Instantly add it to the screen
+      setProducts([
+        ...products,
+        {
+          id: data.insertId,
+          name: newProduct.name,
+          price: newProduct.price,
+          is_available: true,
+        },
+      ]);
+      // Close the modal and reset the form
+      setIsModalOpen(false);
+      setNewProduct({ name: "", price: "", category_id: 1 });
     }
   };
 
-  // If locked, only show the PIN screen
-  if (!isUnlocked) {
+  // NEW: Function to handle deleting a product
+  const handleDelete = async (productId) => {
+    const isConfirmed = window.confirm(
+      "Are you sure you want to delete this product for good? This cannot be undone.",
+    );
+
+    if (!isConfirmed) return;
+
+    try {
+      const response = await fetch(`/api/admin/delete?id=${productId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        // INSTANT DISAPPEAR MAGIC: Filter out the product that matches this ID
+        setProducts(products.filter((product) => product.id !== productId));
+      } else {
+        alert("Something went wrong trying to delete.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 px-6">
-        <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm text-center">
-          <h2 className="text-2xl font-black text-gray-900 mb-2">Admin Access</h2>
-          <p className="text-gray-500 text-sm mb-6">Enter your secret PIN</p>
-          <input 
-            type="password" 
+      <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
+        <form
+          onSubmit={handleLogin}
+          className="bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full border-t-8 border-blue-600"
+        >
+          <h2 className="text-2xl font-black mb-6 text-center text-gray-800">
+            ZT TRADING
+          </h2>
+          <input
+            type="password"
+            placeholder="Enter Admin PIN"
             value={pin}
             onChange={(e) => setPin(e.target.value)}
-            className="w-full text-center tracking-[1em] font-bold text-xl border-2 border-gray-200 rounded-xl p-4 mb-6 focus:border-gray-900 outline-none"
-            placeholder="****"
-            maxLength={4}
+            className="w-full border-2 border-gray-200 p-3 rounded-lg mb-4 text-center text-2xl tracking-widest focus:border-blue-600 outline-none"
           />
-          <button type="submit" className="w-full bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl transition-all">
-            Unlock Dashboard
+          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors">
+            Access Control Room
           </button>
         </form>
       </div>
     );
   }
 
-  // If unlocked, show the inventory manager
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      <header className="bg-gray-900 text-white p-6 sticky top-0 z-40 shadow-md">
-        <h1 className="text-xl font-black">Inventory Manager</h1>
-        <p className="text-gray-400 text-sm font-medium">Live updates to storefront</p>
-      </header>
-
-      <div className="max-w-4xl mx-auto p-6 space-y-4">
-        {allProducts.map(product => (
-          <ProductEditor key={product.id} product={product} router={router} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// A mini-component just for handling the individual product rows safely
-function ProductEditor({ product, router }) {
-  const [price, setPrice] = useState(product.price);
-  const [isAvailable, setIsAvailable] = useState(product.is_available === 1);
-  const [isSaving, setIsSaving] = useState(false);
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    await fetch('/api/admin', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        id: product.id, 
-        is_available: isAvailable ? 1 : 0, 
-        price: price 
-      })
-    });
-    setIsSaving(false);
-    router.refresh(); // Tells Next.js to refresh the live database data!
-  };
-
-  return (
-    <div className={`bg-white p-5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${!isAvailable ? 'opacity-60 border-red-200' : 'border-gray-200 shadow-sm'}`}>
-      
-      <div className="flex-grow">
-        <h3 className="font-bold text-gray-900 leading-tight">{product.name}</h3>
-        <span className={`text-xs font-bold uppercase tracking-wider ${isAvailable ? 'text-green-600' : 'text-red-600'}`}>
-          {isAvailable ? 'In Stock' : 'Out of Stock'}
-        </span>
-      </div>
-
-      <div className="flex items-center gap-3">
-        <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 font-bold text-gray-500">₱</span>
-          <input 
-            type="number" 
-            value={price}
-            onChange={(e) => setPrice(e.target.value)}
-            className="w-24 pl-8 pr-3 py-2 border rounded-lg font-bold text-gray-900 bg-gray-50"
-          />
+    <div className="flex h-screen bg-gray-100">
+      {/* SIDEBAR */}
+      <div className="w-64 bg-gray-900 text-white flex flex-col hidden md:flex">
+        <div className="p-6">
+          <h2 className="text-2xl font-black tracking-wider text-blue-400">
+            ZT TRADING
+          </h2>
+          <p className="text-gray-400 text-sm mt-1">Admin Control Room</p>
         </div>
-
-        <button 
-          onClick={() => setIsAvailable(!isAvailable)}
-          className={`px-4 py-2 rounded-lg font-bold text-sm ${isAvailable ? 'bg-red-100 text-red-700 hover:bg-red-200' : 'bg-green-100 text-green-700 hover:bg-green-200'}`}
-        >
-          {isAvailable ? 'Hide' : 'Show'}
-        </button>
-
-        <button 
-          onClick={handleSave}
-          disabled={isSaving}
-          className="bg-gray-900 hover:bg-black text-white px-5 py-2 rounded-lg font-bold text-sm disabled:opacity-50"
-        >
-          {isSaving ? '...' : 'Save'}
-        </button>
+        <nav className="flex-1 px-4 space-y-2 mt-4">
+          <button
+            onClick={() => setActiveTab("products")}
+            className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${activeTab === "products" ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-800"}`}
+          >
+            📦 Products
+          </button>
+          <button
+            onClick={() => setActiveTab("categories")}
+            className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${activeTab === "categories" ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-800"}`}
+          >
+            📁 Categories
+          </button>
+          <button
+            onClick={() => setActiveTab("orders")}
+            className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${activeTab === "orders" ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-800"}`}
+          >
+            📱 WhatsApp Orders
+          </button>
+        </nav>
       </div>
+
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 p-4 sm:p-8 overflow-y-auto relative">
+        {/* PRODUCTS TAB */}
+        {activeTab === "products" && (
+          <div>
+            <div className="flex justify-between items-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-800">
+                Manage Inventory
+              </h1>
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold shadow-md transition-colors"
+              >
+                + Add New Product
+              </button>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[600px]">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider">
+                    <th className="p-4 border-b font-semibold">Product Name</th>
+                    <th className="p-4 border-b font-semibold text-center">
+                      Price (₱)
+                    </th>
+                    <th className="p-4 border-b font-semibold text-center">
+                      Status
+                    </th>
+                    <th className="p-4 border-b font-semibold text-center">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {products.map((product) => (
+                    <tr
+                      key={product.id}
+                      className="hover:bg-blue-50/50 transition-colors"
+                    >
+                      <td className="p-4 font-medium text-gray-800">
+                        {product.name}
+                      </td>
+                      <td className="p-4 text-center">
+                        <input
+                          type="number"
+                          defaultValue={product.price}
+                          onBlur={(e) =>
+                            updateProduct(
+                              product.id,
+                              e.target.value,
+                              product.is_available,
+                            )
+                          }
+                          className="border border-gray-300 p-2 rounded-md w-24 text-center focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                      </td>
+                      <td className="p-4 text-center">
+                        <button
+                          onClick={() =>
+                            updateProduct(
+                              product.id,
+                              product.price,
+                              !product.is_available,
+                            )
+                          }
+                          className={`px-4 py-1.5 rounded-full text-xs font-bold w-28 uppercase tracking-wide ${product.is_available ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-red-100 text-red-700 hover:bg-red-200"}`}
+                        >
+                          {product.is_available ? "In Stock" : "Sold Out"}
+                        </button>
+                      </td>
+
+                      {/* NEW DELETE COLUMN */}
+                      <td className="p-4 text-center">
+                        <button
+                          onClick={() => handleDelete(product.id)}
+                          className="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide bg-gray-100 text-gray-600 hover:bg-red-600 hover:text-white transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* --- ADD PRODUCT MODAL --- */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">
+              Add New Product
+            </h2>
+            <form onSubmit={handleAddProduct} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Product Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={newProduct.name}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, name: e.target.value })
+                  }
+                  className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="e.g., S&R Beef Belly 1kg"
+                />
+              </div>
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">
+                    Price (₱)
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={newProduct.price}
+                    onChange={(e) =>
+                      setNewProduct({ ...newProduct, price: e.target.value })
+                    }
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <select
+                    value={newProduct.category_id}
+                    onChange={(e) =>
+                      setNewProduct({
+                        ...newProduct,
+                        category_id: e.target.value,
+                      })
+                    }
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                  >
+                    <option value="1">Meats</option>
+                    <option value="2">S&R Items</option>
+                  </select>
+                </div>
+              </div>
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-5 py-2 rounded-lg font-bold text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-md"
+                >
+                  Save Product
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
