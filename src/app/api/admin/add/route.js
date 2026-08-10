@@ -3,17 +3,19 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const { name, price, category_id } = await request.json();
+    // Grab the new image_url from the frontend
+    const { name, price, category_id, image_url } = await request.json();
+
+    // Add image_url to the query with 4 question marks
+    const query = 'INSERT INTO products (name, price, category_id, image_url) VALUES (?, ?, ?, ?)';
     
-    // Insert the new product into Aiven. We default 'is_available' to true.
-    const [result] = await pool.query(
-      'INSERT INTO products (name, price, category_id, is_available) VALUES (?, ?, ?, ?)',
-      [name, price, category_id, true]
-    );
+    // Pass the image_url to MySQL
+    const [result] = await pool.query(query, [name, price, category_id, image_url || null]);
+
+    return NextResponse.json({ insertId: result.insertId, message: 'Product added successfully' }, { status: 200 });
     
-    // Return the new ID so the dashboard can update instantly
-    return NextResponse.json({ success: true, insertId: result.insertId });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Add error:", error);
+    return NextResponse.json({ error: 'Failed to add product' }, { status: 500 });
   }
 }

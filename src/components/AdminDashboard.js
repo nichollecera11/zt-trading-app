@@ -13,6 +13,7 @@ export default function AdminDashboard({ allProducts }) {
     name: "",
     price: "",
     category_id: 1,
+    image_url: "",
   });
 
   const SECRET_PIN = "1234";
@@ -54,12 +55,13 @@ export default function AdminDashboard({ allProducts }) {
           id: data.insertId,
           name: newProduct.name,
           price: newProduct.price,
+          image_url: newProduct.image_url,
           is_available: true,
         },
       ]);
       // Close the modal and reset the form
       setIsModalOpen(false);
-      setNewProduct({ name: "", price: "", category_id: 1 });
+      setNewProduct({ name: "", price: "", category_id: 1, image_url: "" });
     }
   };
 
@@ -254,6 +256,21 @@ export default function AdminDashboard({ allProducts }) {
                   }
                   className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   placeholder="e.g., S&R Beef Belly 1kg"
+                />
+              </div>
+              {/* 2. 👉 PASTE THE NEW IMAGE URL INPUT RIGHT HERE 👈 */}
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Image URL
+                </label>
+                <input
+                  type="text"
+                  value={newProduct.image_url}
+                  onChange={(e) =>
+                    setNewProduct({ ...newProduct, image_url: e.target.value })
+                  }
+                  className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-4"
+                  placeholder="Paste image link here (e.g., https://...)"
                 />
               </div>
               <div className="flex gap-4">
