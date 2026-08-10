@@ -6,6 +6,7 @@ export default function AdminDashboard({ allProducts }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [products, setProducts] = useState(allProducts);
   const [activeTab, setActiveTab] = useState("products");
+  const [selectedImage, setSelectedImage] = useState(null); // Stores image URL to view full size
 
   // NEW: State for our Add Product Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -166,17 +167,13 @@ export default function AdminDashboard({ allProducts }) {
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[600px]">
                 <thead>
-                  <tr className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider">
-                    <th className="p-4 border-b font-semibold">Product Name</th>
-                    <th className="p-4 border-b font-semibold text-center">
-                      Price (₱)
+                  <tr className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider border-b border-gray-200">
+                    <th className="p-4 text-left font-semibold w-1/2">
+                      Product
                     </th>
-                    <th className="p-4 border-b font-semibold text-center">
-                      Status
-                    </th>
-                    <th className="p-4 border-b font-semibold text-center">
-                      Actions
-                    </th>
+                    <th className="p-4 text-center font-semibold">Price (₱)</th>
+                    <th className="p-4 text-center font-semibold">Status</th>
+                    <th className="p-4 text-right font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
@@ -185,8 +182,40 @@ export default function AdminDashboard({ allProducts }) {
                       key={product.id}
                       className="hover:bg-blue-50/50 transition-colors"
                     >
-                      <td className="p-4 font-medium text-gray-800">
-                        {product.name}
+                      <td className="p-4">
+                        <div className="flex items-center gap-4">
+                          {/* The Image Lightbox */}
+                          {product.image_url ? (
+                            <div
+                              onClick={() =>
+                                setSelectedImage({
+                                  url: product.image_url,
+                                  name: product.name,
+                                })
+                              }
+                              className="cursor-pointer group relative shrink-0"
+                              title="Click to view full image"
+                            >
+                              <img
+                                src={product.image_url}
+                                alt={product.name}
+                                className="w-12 h-12 rounded-lg object-cover border border-gray-200 transition-transform group-hover:scale-105 shadow-sm"
+                              />
+                              <span className="absolute inset-0 bg-black/30 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-opacity">
+                                View
+                              </span>
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-400 shrink-0 border border-gray-200">
+                              No Img
+                            </div>
+                          )}
+
+                          {/* The Product Name */}
+                          <span className="font-semibold text-gray-800 text-sm">
+                            {product.name}
+                          </span>
+                        </div>
                       </td>
                       <td className="p-4 text-center">
                         <input
@@ -324,6 +353,46 @@ export default function AdminDashboard({ allProducts }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* --- FULL IMAGE LIGHTBOX MODAL --- */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[60] backdrop-blur-sm"
+          onClick={() => setSelectedImage(null)} // Click outside to close
+        >
+          <div
+            className="bg-white rounded-2xl p-4 max-w-xl w-full relative shadow-2xl flex flex-col items-center"
+            onClick={(e) => e.stopPropagation()} // Prevent clicking inside from closing
+          >
+            <div className="w-full flex justify-between items-center mb-3 pb-2 border-b">
+              <h3 className="font-bold text-gray-800 text-lg">
+                {selectedImage.name}
+              </h3>
+              <button
+                onClick={() => setSelectedImage(null)}
+                className="text-gray-400 hover:text-gray-700 font-bold text-xl px-2 rounded-lg hover:bg-gray-100"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Full Uncropped Image */}
+            <div className="w-full max-h-[70vh] flex items-center justify-center overflow-hidden rounded-lg bg-gray-50 p-2 border">
+              <img
+                src={selectedImage.url}
+                alt={selectedImage.name}
+                className="max-h-[65vh] max-w-full object-contain rounded-md"
+              />
+            </div>
+
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="mt-4 px-6 py-2 bg-gray-800 text-white font-semibold rounded-lg hover:bg-gray-900 transition-colors"
+            >
+              Close Preview
+            </button>
           </div>
         </div>
       )}
