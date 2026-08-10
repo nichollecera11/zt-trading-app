@@ -16,6 +16,7 @@ export default function AdminDashboard({ allProducts }) {
     category_id: 1,
     image_url: "",
   });
+  const [editingProduct, setEditingProduct] = useState(null); // NEW: State for our Edit Product Modal
 
   const SECRET_PIN = "1234";
 
@@ -63,6 +64,35 @@ export default function AdminDashboard({ allProducts }) {
       // Close the modal and reset the form
       setIsModalOpen(false);
       setNewProduct({ name: "", price: "", category_id: 1, image_url: "" });
+    }
+  };
+
+  // NEW: Function to handle saving the edited product
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch("/api/admin/edit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editingProduct),
+      });
+
+      if (res.ok) {
+        // INSTANT UI MAGIC: Find the old product in the list and replace it with the new edited one
+        setProducts(
+          products.map((p) =>
+            p.id === editingProduct.id ? editingProduct : p,
+          ),
+        );
+
+        // Close the modal
+        setEditingProduct(null);
+      } else {
+        alert("Something went wrong trying to edit the product.");
+      }
+    } catch (error) {
+      console.error("Error updating product:", error);
     }
   };
 
@@ -246,14 +276,22 @@ export default function AdminDashboard({ allProducts }) {
                         </button>
                       </td>
 
-                      {/* NEW DELETE COLUMN */}
-                      <td className="p-4 text-center">
-                        <button
-                          onClick={() => handleDelete(product.id)}
-                          className="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide bg-gray-100 text-gray-600 hover:bg-red-600 hover:text-white transition-colors"
-                        >
-                          Delete
-                        </button>
+                      {/* Existing Actions Column */}
+                      <td className="p-4 text-right align-middle">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => setEditingProduct(product)}
+                            className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(product.id)}
+                            className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-600 hover:bg-red-600 hover:text-white transition-colors"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -393,6 +431,126 @@ export default function AdminDashboard({ allProducts }) {
             >
               Close Preview
             </button>
+          </div>
+        </div>
+      )}
+      {/* --- EDIT PRODUCT MODAL --- */}
+      {editingProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
+            <h2 className="text-2xl font-bold mb-4 text-gray-800">
+              Edit Product
+            </h2>
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Product Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingProduct.name}
+                  onChange={(e) =>
+                    setEditingProduct({
+                      ...editingProduct,
+                      name: e.target.value,
+                    })
+                  }
+                  className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-1">
+                  Image URL
+                </label>
+                <input
+                  type="text"
+                  value={editingProduct.image_url || ""}
+                  onChange={(e) =>
+                    setEditingProduct({
+                      ...editingProduct,
+                      image_url: e.target.value,
+                    })
+                  }
+                  className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-2"
+                />
+                {/* Live Preview Box */}
+                {editingProduct.image_url && (
+                  <div className="mt-2 p-2 border rounded-lg bg-gray-50 flex flex-col items-center justify-center">
+                    <img
+                      src={editingProduct.image_url}
+                      alt="Preview"
+                      className="max-h-32 rounded-lg object-contain shadow-sm border"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src =
+                          "https://via.placeholder.com/150?text=Invalid+Image+URL";
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">
+                    Price (₱)
+                  </label>
+                  <input
+                    type="number"
+                    required
+                    value={editingProduct.price}
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        price: e.target.value,
+                      })
+                    }
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">
+                    Category
+                  </label>
+                  <select
+                    value={editingProduct.category_id}
+                    onChange={(e) =>
+                      setEditingProduct({
+                        ...editingProduct,
+                        category_id: e.target.value,
+                      })
+                    }
+                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                  >
+                    <option value="1">S&R Food Service</option>
+                    <option value="2">Bakery & Pastries</option>
+                    <option value="3">Fresh Meat & Seafood</option>
+                    <option value="4">Imported Snacks</option>
+                    <option value="5">Frozen Goods</option>
+                    <option value="6">Beverages & Alcohol</option>
+                    <option value="7">Household Essentials</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setEditingProduct(null)}
+                  className="px-5 py-2 rounded-lg font-bold text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-md"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
