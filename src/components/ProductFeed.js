@@ -47,7 +47,7 @@ export default function ProductFeed({ allProducts }) {
     <div className="w-full">
       {/* 3. The New Premium Search Bar */}
       {/* 👇 Added sticky, top-0, z-40, bg-white, and pb-4 to fix the overlap 👇 */}
-      <div className="sticky top-0 z-40 bg-white pt-5 pb-4 w-full ">
+      <div className="sticky top-0 z-40 bg-white pt-5 pb-1 w-full ">
         <div className="max-w-4xl mx-auto px-6">
           <div className="relative">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
@@ -65,7 +65,7 @@ export default function ProductFeed({ allProducts }) {
       </div>
 
       {/* Premium Swipeable Category Bar */}
-      <div className="bg-white border-b border-gray-200 sticky top-[85px] z-30 mb-8">
+      <div className="bg-white border-b border-gray-200 sticky top-[72px] z-30 mb-8">
         <div className="max-w-4xl mx-auto overflow-x-auto hide-scrollbar px-6">
           <div className="flex gap-2 py-4 w-max">
             {categories.map((category) => (
