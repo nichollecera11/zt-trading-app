@@ -16,7 +16,7 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-gray-50 pb-24">
-      <header className="mb-10 flex flex-col items-center justify-center text-center">
+      <header className="mb-4 flex flex-col items-center justify-center text-center">
         {/* 1. The Big Centered Logo */}
         <img
           src="/images/logo_ui.png"
