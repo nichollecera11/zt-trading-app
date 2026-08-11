@@ -21,9 +21,8 @@ export default function ProductFeed({ allProducts }) {
 
     // Check if the search text is inside the product name or description
     const searchLower = searchQuery.toLowerCase();
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchLower) ||
-      product.description.toLowerCase().includes(searchLower);
+    const safeDescription = product.description || '';
+    const matchesSearch = product.name.toLowerCase().includes(searchLower) || safeDescription.toLowerCase().includes(searchLower);
 
     return matchesCategory && matchesSearch;
   });
