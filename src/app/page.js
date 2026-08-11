@@ -16,23 +16,31 @@ export default async function Home() {
 
   return (
     <main className="min-h-screen bg-gray-50 pb-24">
-      <header className="bg-white shadow-sm pt-12 pb-6 px-6 text-center sticky top-0 z-40 border-b border-gray-200">
-        <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-          ZT Trading
+      <header className="mb-10 flex flex-col items-center justify-center text-center">
+        {/* 1. The Big Centered Logo */}
+        <img
+          src="/images/logo_ui.png"
+          alt="ZT Trading Logo"
+          className="mt-5 w-30 h-30 object-contain"
+        />
+
+        {/* 2. The Brand Title */}
+        <h1 className="text-4xl font-black text-gray-900 tracking-tight">
+          ZT TRADING
         </h1>
-        <p className="text-gray-500 mt-1 text-sm font-medium">
-          Premium S&R Essentials & Fresh Meat Delivery in CDO
+
+        {/* 3. The Tagline */}
+        <p className="text-sm font-medium text-gray-500 mt-2 tracking-wide">
+          Premium meats & S&R essentials, delivered to your door.
         </p>
 
-        {/* The Developer Portfolio Link */}
-        <div className="mt-3">
-          <Link
-            href="/about"
-            className="text-xs font-bold text-blue-600 hover:underline inline-flex items-center gap-1"
-          >
-            ⚡ Built by Migo (View Developer Profile)
-          </Link>
-        </div>
+        {/* 4. The About Link */}
+        <Link
+          href="/about"
+          className="mt-4 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors"
+        >
+          About the Developer
+        </Link>
       </header>
 
       <ProductFeed allProducts={products} />

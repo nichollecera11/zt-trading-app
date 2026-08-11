@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "ZT Trading | S&R Essentials Delivery",
+  title: "ZT Trading | Shop at the comfort of your Home",
   description: "Premium on-demand S&R personal shopper and delivery service in CDO.",
 };
 
