@@ -12,7 +12,7 @@ export default function Checkout() {
   const increaseQuantity = useCart((state) => state.increaseQuantity);
   const decreaseQuantity = useCart((state) => state.decreaseQuantity);
   const removeItem = useCart((state) => state.removeItem);
-
+  
   const YOUR_PHONE_NUMBER = '639068461463'; 
 
   const deliveryDistances = [
@@ -85,9 +85,7 @@ export default function Checkout() {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
           <h2 className="font-bold text-lg mb-4 border-b pb-2">Order Summary</h2>
           
-          {/* NEW INTERACTIVE CART ROWS */}
-          <div className="space-y-3 mb-6">
-            {items.map(item => (
+          {items.map(item => (
               <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
                 {/* Product Name & Single Price */}
                 <div className="flex-1">
@@ -113,15 +111,22 @@ export default function Checkout() {
                 </div>
               </div>
             ))}
-          </div>
-          {/* END INTERACTIVE ROWS */}
           
-          {/* Your existing subtotal/grand total footer stays below this */}
           <div className="mt-4 pt-4 border-t space-y-2">
             <div className="flex justify-between text-sm text-gray-500 font-medium">
               <span>Subtotal</span>
               <span>₱{subtotal.toFixed(2)}</span>
             </div>
+            <div className="flex justify-between text-sm text-gray-500 font-medium">
+              <span>Delivery Fee</span>
+              <span>₱{selectedDistance.fee.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between mt-2 pt-2 border-t font-black text-xl text-gray-900">
+              <span>Grand Total</span>
+              <span>₱{grandTotal.toFixed(2)}</span>
+            </div>
+          </div>
+        </div>
 
         <form onSubmit={handleOrder} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h2 className="font-bold text-lg mb-4">Delivery Details</h2>
