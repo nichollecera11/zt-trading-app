@@ -8,6 +8,11 @@ export default function Checkout() {
   const items = useCart((state) => state.items);
   const clearCart = useCart((state) => state.clearCart);
 
+  // 👇 NEW: Pull in the new actions
+  const increaseQuantity = useCart((state) => state.increaseQuantity);
+  const decreaseQuantity = useCart((state) => state.decreaseQuantity);
+  const removeItem = useCart((state) => state.removeItem);
+
   const YOUR_PHONE_NUMBER = '639068461463'; 
 
   const deliveryDistances = [
@@ -80,28 +85,43 @@ export default function Checkout() {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
           <h2 className="font-bold text-lg mb-4 border-b pb-2">Order Summary</h2>
           
-          {items.map(item => (
-            <div key={item.id} className="flex justify-between mb-2 text-sm text-gray-700">
-              <span>{item.quantity}x {item.name}</span>
-              <span className="font-medium">₱{(item.price * item.quantity).toFixed(2)}</span>
-            </div>
-          ))}
+          {/* NEW INTERACTIVE CART ROWS */}
+          <div className="space-y-3 mb-6">
+            {items.map(item => (
+              <div key={item.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200">
+                {/* Product Name & Single Price */}
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-800 text-sm leading-tight">{item.name}</h4>
+                  <p className="text-xs font-bold text-gray-500">₱{Number(item.price).toFixed(2)} each</p>
+                </div>
+
+                {/* Controls: Plus/Minus, Total, Remove */}
+                <div className="flex items-center gap-3 self-end sm:self-auto">
+                  <div className="flex items-center border border-gray-300 rounded-lg bg-white overflow-hidden shadow-sm">
+                    <button type="button" onClick={() => decreaseQuantity(item.id)} className="px-3 py-1 text-gray-600 hover:bg-gray-100 font-bold transition-colors">-</button>
+                    <span className="px-3 text-sm font-bold text-gray-800">{item.quantity}</span>
+                    <button type="button" onClick={() => increaseQuantity(item.id)} className="px-3 py-1 text-gray-600 hover:bg-gray-100 font-bold transition-colors">+</button>
+                  </div>
+
+                  <span className="text-sm font-bold text-gray-900 w-16 text-right">
+                    ₱{(item.price * item.quantity).toFixed(2)}
+                  </span>
+
+                  <button type="button" onClick={() => removeItem(item.id)} className="text-gray-400 hover:text-red-600 transition-colors p-1" title="Remove item">
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* END INTERACTIVE ROWS */}
           
+          {/* Your existing subtotal/grand total footer stays below this */}
           <div className="mt-4 pt-4 border-t space-y-2">
             <div className="flex justify-between text-sm text-gray-500 font-medium">
               <span>Subtotal</span>
               <span>₱{subtotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-sm text-gray-500 font-medium">
-              <span>Delivery Fee</span>
-              <span>₱{selectedDistance.fee.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between mt-2 pt-2 border-t font-black text-xl text-gray-900">
-              <span>Grand Total</span>
-              <span>₱{grandTotal.toFixed(2)}</span>
-            </div>
-          </div>
-        </div>
 
         <form onSubmit={handleOrder} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h2 className="font-bold text-lg mb-4">Delivery Details</h2>

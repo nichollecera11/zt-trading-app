@@ -1,7 +1,6 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware'; // 1. Import the persist tool
+import { persist } from 'zustand/middleware';
 
-// 2. Wrap your store inside persist()
 export const useCart = create(
   persist(
     (set) => ({
@@ -9,24 +8,43 @@ export const useCart = create(
       
       addItem: (product) => set((state) => {
         const existingItem = state.items.find(item => item.id === product.id);
-        
         if (existingItem) {
           return {
             items: state.items.map(item =>
-              item.id === product.id 
-                ? { ...item, quantity: item.quantity + 1 } 
-                : item
+              item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
             )
           };
         }
-        
         return { items: [...state.items, { ...product, quantity: 1 }] };
       }),
+
+      // NEW: Increase quantity (+1)
+      increaseQuantity: (id) => set((state) => ({
+        items: state.items.map(item =>
+          item.id === id ? { ...item, quantity: item.quantity + 1 } : item
+        )
+      })),
+
+      // NEW: Decrease quantity (-1)
+      decreaseQuantity: (id) => set((state) => ({
+        items: state.items.map(item => {
+          if (item.id === id) {
+            const newQty = item.quantity - 1;
+            return newQty > 0 ? { ...item, quantity: newQty } : item;
+          }
+          return item;
+        })
+      })),
+
+      // NEW: Remove item completely
+      removeItem: (id) => set((state) => ({
+        items: state.items.filter(item => item.id !== id)
+      })),
 
       clearCart: () => set({ items: [] }),
     }),
     {
-      name: 'zt-trading-cart', // 3. This is the secret name used to save data in the phone's storage
+      name: 'cart-storage',
     }
   )
 );
