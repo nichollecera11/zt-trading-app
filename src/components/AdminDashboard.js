@@ -7,13 +7,13 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
   // ==========================================
   const [pin, setPin] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
+
   const [products, setProducts] = useState(allProducts);
   const [orders, setOrders] = useState(allOrders);
-  
+
   const [activeTab, setActiveTab] = useState("products");
   const [orderView, setOrderView] = useState("active");
-  
+
   const [selectedImage, setSelectedImage] = useState(null);
 
   // --- NEW: Product Manager States (Sliding Form) ---
@@ -22,9 +22,9 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
   const [productForm, setProductForm] = useState({
     name: "",
     price: "",
-    category_id: 1, 
+    category_id: 1,
     description: "",
-    image_url: "" 
+    image_url: "",
   });
 
   // --- OLD: Modal States (Kept as requested) ---
@@ -37,7 +37,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
   });
   const [editingProduct, setEditingProduct] = useState(null);
 
-
   // ==========================================
   // 2. EFFECTS
   // ==========================================
@@ -45,7 +44,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     setOrders(allOrders);
     console.log("LIVE DATABASE ORDERS:", allOrders);
   }, [allOrders]);
-
 
   // ==========================================
   // 3. AUTHENTICATION FUNCTION
@@ -69,7 +67,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       alert("Something went wrong checking the PIN.");
     }
   };
-
 
   // ==========================================
   // 4. ORDER MANAGEMENT FUNCTIONS
@@ -95,13 +92,13 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     }
   };
 
-
   // ==========================================
   // 5. NEW PRODUCT FUNCTIONS (Sliding Form)
   // ==========================================
   const handleDeleteProduct = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this product?")) return;
-    
+    if (!window.confirm("Are you sure you want to delete this product?"))
+      return;
+
     setProducts(products.filter((p) => p.id !== id));
     await fetch(`/api/products?id=${id}`, { method: "DELETE" });
   };
@@ -135,11 +132,16 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       }
     }
 
-    setProductForm({ name: "", price: "", category_id: 1, description: "", image_url: "" });
+    setProductForm({
+      name: "",
+      price: "",
+      category_id: 1,
+      description: "",
+      image_url: "",
+    });
     setIsAddingProduct(false);
     setEditingProductId(null);
   };
-
 
   // ==========================================
   // 6. OLD PRODUCT FUNCTIONS (Kept as requested)
@@ -228,7 +230,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     }
   };
 
-
   // ==========================================
   // 7. SECURITY GATE (Renders before dashboard)
   // ==========================================
@@ -267,7 +268,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     );
   }
 
-
   // ==========================================
   // 8. DATA FILTERS FOR RENDER
   // ==========================================
@@ -285,7 +285,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
 
   return (
     <div className="flex h-screen bg-gray-100">
-      
       {/* ========================================== */}
       {/* 1. SIDEBAR NAVIGATION                        */}
       {/* ========================================== */}
@@ -322,7 +321,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       {/* 2. MAIN CONTENT AREA (Where Tabs Render)     */}
       {/* ========================================== */}
       <div className="flex-1 p-4 sm:p-8 overflow-y-auto relative">
-        
         {/* -------------------------------------- */}
         {/* TAB A: PRODUCTS / INVENTORY            */}
         {/* -------------------------------------- */}
@@ -350,126 +348,136 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
               </button>
             </div>
 
-            {/* SLIDE-IN FORM: Add/Edit Product */}
+            {/* MODAL FORM: Add/Edit Product */}
             {isAddingProduct && (
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8 animate-fade-in">
-                <h2 className="text-xl font-bold mb-4 text-gray-800">
-                  {editingProductId ? "✏️ Edit Product" : "📦 Add New Product"}
-                </h2>
-                <form
-                  onSubmit={handleSaveProduct}
-                  className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-                >
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      Product Name
-                    </label>
-                    <input
-                      required
-                      type="text"
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-                      value={productForm.name}
-                      onChange={(e) =>
-                        setProductForm({ ...productForm, name: e.target.value })
-                      }
-                      placeholder="e.g., S&R Roasted Chicken"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      Price (₱)
-                    </label>
-                    <input
-                      required
-                      type="number"
-                      step="0.01"
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all font-bold text-green-700"
-                      value={productForm.price}
-                      onChange={(e) =>
-                        setProductForm({
-                          ...productForm,
-                          price: e.target.value,
-                        })
-                      }
-                      placeholder="0.00"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      Category
-                    </label>
-                    <select
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-                      value={productForm.category_id}
-                      onChange={(e) =>
-                        setProductForm({
-                          ...productForm,
-                          category_id: parseInt(e.target.value),
-                        })
-                      }
-                    >
-                      <option value={1}>
-                        Category 1 (e.g., Fresh Meat / Seafood)
-                      </option>
-                      <option value={2}>
-                        Category 2 (e.g., Pantry / Snacks)
-                      </option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      Description (Optional)
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
-                      value={productForm.description || ""}
-                      onChange={(e) =>
-                        setProductForm({
-                          ...productForm,
-                          description: e.target.value,
-                        })
-                      }
-                      placeholder="Brief details about the item..."
-                    />
-                  </div>
+              <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[70] backdrop-blur-sm">
+                <div className="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-2xl relative max-h-[90vh] overflow-y-auto animate-fade-in">
+                  <h2 className="text-2xl font-bold mb-6 text-gray-800 border-b pb-4">
+                    {editingProductId
+                      ? "✏️ Edit Product"
+                      : "📦 Add New Product"}
+                  </h2>
+                  <form
+                    onSubmit={handleSaveProduct}
+                    className="grid grid-cols-1 sm:grid-cols-2 gap-5"
+                  >
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Product Name
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all bg-gray-50 focus:bg-white"
+                        value={productForm.name}
+                        onChange={(e) =>
+                          setProductForm({
+                            ...productForm,
+                            name: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., S&R Roasted Chicken"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Price (₱)
+                      </label>
+                      <input
+                        required
+                        type="number"
+                        step="0.01"
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all font-bold text-green-700 bg-gray-50 focus:bg-white"
+                        value={productForm.price}
+                        onChange={(e) =>
+                          setProductForm({
+                            ...productForm,
+                            price: e.target.value,
+                          })
+                        }
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Category
+                      </label>
+                      <select
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all bg-gray-50 focus:bg-white"
+                        value={productForm.category_id}
+                        onChange={(e) =>
+                          setProductForm({
+                            ...productForm,
+                            category_id: parseInt(e.target.value),
+                          })
+                        }
+                      >
+                        <option value={1}>
+                          Category 1 (e.g., Fresh Meat / Seafood)
+                        </option>
+                        <option value={2}>
+                          Category 2 (e.g., Pantry / Snacks)
+                        </option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Description (Optional)
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all bg-gray-50 focus:bg-white"
+                        value={productForm.description || ""}
+                        onChange={(e) =>
+                          setProductForm({
+                            ...productForm,
+                            description: e.target.value,
+                          })
+                        }
+                        placeholder="Brief details about the item..."
+                      />
+                    </div>
 
-                  {/* IMAGE URL FIELD */}
-                  <div className="sm:col-span-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">
-                      Image URL
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-blue-600"
-                      value={productForm.image_url || ""}
-                      onChange={(e) =>
-                        setProductForm({ ...productForm, image_url: e.target.value })
-                      }
-                      placeholder="image link"
-                    />
-                  </div>
+                    {/* IMAGE URL FIELD */}
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Image URL
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-blue-600 bg-gray-50 focus:bg-white"
+                        value={productForm.image_url || ""}
+                        onChange={(e) =>
+                          setProductForm({
+                            ...productForm,
+                            image_url: e.target.value,
+                          })
+                        }
+                        placeholder="image link"
+                      />
+                    </div>
 
-                  {/* Form Action Buttons */}
-                  <div className="sm:col-span-2 flex justify-end gap-3 mt-4">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsAddingProduct(false);
-                        setEditingProductId(null);
-                      }}
-                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-6 rounded-lg transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-6 rounded-lg transition-colors shadow-sm"
-                    >
-                      {editingProductId ? "Save Changes" : "Save Product"}
-                    </button>
-                  </div>
-                </form>
+                    {/* Form Action Buttons */}
+                    <div className="sm:col-span-2 flex justify-end gap-3 mt-6 border-t pt-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddingProduct(false);
+                          setEditingProductId(null);
+                        }}
+                        className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-6 rounded-lg transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-md"
+                      >
+                        {editingProductId ? "Save Changes" : "Save Product"}
+                      </button>
+                    </div>
+                  </form>
+                </div>
               </div>
             )}
 
@@ -479,7 +487,9 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                 <thead>
                   <tr className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider border-b border-gray-200">
                     <th className="p-4 font-semibold w-16">ID</th>
-                    <th className="p-4 font-semibold w-20 text-center">Image</th>
+                    <th className="p-4 font-semibold w-20 text-center">
+                      Image
+                    </th>
                     <th className="p-4 font-semibold">Product Info</th>
                     <th className="p-4 font-semibold">Category</th>
                     <th className="p-4 font-semibold">Price</th>
@@ -508,10 +518,10 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                         {/* IMAGE THUMBNAIL */}
                         <td className="p-4 text-center">
                           {product.image_url ? (
-                            <img 
-                              src={product.image_url} 
-                              alt={product.name} 
-                              className="w-12 h-12 rounded-lg object-cover border border-gray-200 shadow-sm mx-auto" 
+                            <img
+                              src={product.image_url}
+                              alt={product.name}
+                              className="w-12 h-12 rounded-lg object-cover border border-gray-200 shadow-sm mx-auto"
                             />
                           ) : (
                             <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-xl mx-auto border border-gray-200 text-gray-300">
@@ -556,7 +566,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                                 });
                                 setEditingProductId(product.id);
                                 setIsAddingProduct(true);
-                                window.scrollTo({ top: 0, behavior: "smooth" });
                               }}
                               className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-colors border border-blue-100"
                               title="Edit Product"
@@ -970,7 +979,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
           </div>
         </div>
       )}
-
     </div>
   );
 }
