@@ -4,7 +4,6 @@ import { useCart } from "../../store/useCart";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
-
 export default function Checkout() {
   const items = useCart((state) => state.items);
   const clearCart = useCart((state) => state.clearCart);
@@ -48,14 +47,14 @@ export default function Checkout() {
 
   // 👇 NEW: Load saved details when the page opens
   useEffect(() => {
-    const savedCustomer = localStorage.getItem('zt_customer_details');
+    const savedCustomer = localStorage.getItem("zt_customer_details");
     if (savedCustomer) {
       const parsedData = JSON.parse(savedCustomer);
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        name: parsedData.name || '',
-        address: parsedData.address || '',
-        phone: parsedData.phone || ''
+        name: parsedData.name || "",
+        address: parsedData.address || "",
+        phone: parsedData.phone || "",
       }));
     }
   }, []);
@@ -71,10 +70,11 @@ export default function Checkout() {
   );
   const grandTotal = subtotal + selectedDistance.fee;
 
-  const handleOrder = (e) => {
+  const handleOrder = async (e) => {
+    // 👈 Notice we added 'async' here!
     e.preventDefault();
 
-    // 1. Build the exact same message
+    // 1. Build the exact same message for the receipt
     let message = `*NEW ORDER (ZT Trading)*\n\n`;
     message += `*Name:* ${formData.name}\n`;
     message += `*Address:* ${formData.address}\n`;
@@ -94,31 +94,62 @@ export default function Checkout() {
 
     const encodedMessage = encodeURIComponent(message);
 
-    // 2. Route it to the correct app!
-    if (orderMethod === "whatsapp") {
-      window.open(
-        `https://wa.me/${YOUR_PHONE_NUMBER}?text=${encodedMessage}`,
-        "_blank",
+    try {
+      // 👇 NEW MAGIC: Save to the Aiven Database First! 👇
+      const response = await fetch("/api/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          formData,
+          selectedDistance,
+          subtotal,
+          grandTotal,
+          items,
+          orderMethod,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Database save failed");
+      }
+
+      // 2. Route it to the correct app ONLY if the database save was successful!
+      if (orderMethod === "whatsapp") {
+        window.open(
+          `https://wa.me/${YOUR_PHONE_NUMBER}?text=${encodedMessage}`,
+          "_blank",
+        );
+      } else if (orderMethod === "sms") {
+        window.open(
+          `sms:+${YOUR_PHONE_NUMBER}?body=${encodedMessage}`,
+          "_self",
+        );
+      } else if (orderMethod === "copy") {
+        navigator.clipboard.writeText(message);
+        alert(
+          "📋 Order copied to clipboard! You can now paste this directly into Facebook Messenger or Viber.",
+        );
+      }
+
+      // 3. Save their details for their next order
+      localStorage.setItem(
+        "zt_customer_details",
+        JSON.stringify({
+          name: formData.name,
+          address: formData.address,
+          phone: formData.phone,
+        }),
       );
-    } else if (orderMethod === "sms") {
-      // Triggers the native text messaging app on their phone
-      window.open(`sms:+${YOUR_PHONE_NUMBER}?body=${encodedMessage}`, "_self");
-    } else if (orderMethod === "copy") {
-      // Copies to their clipboard so they can paste it anywhere
-      navigator.clipboard.writeText(message);
+
+      // 4. Clear the cart and send them home
+      clearCart();
+      window.location.href = "/";
+    } catch (error) {
+      console.error("Order Error:", error);
       alert(
-        "📋 Order copied to clipboard! You can now paste this directly into Facebook Messenger or Viber.",
+        "Oops! Something went wrong while processing your order. Please try again.",
       );
     }
-    // 👇 NEW: Save their details for their next order!
-    localStorage.setItem('zt_customer_details', JSON.stringify({
-      name: formData.name,
-      address: formData.address,
-      phone: formData.phone
-    }));
-
-    clearCart();
-    window.location.href = "/";
   };
 
   if (items.length === 0) {

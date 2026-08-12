@@ -1,12 +1,19 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-export default function AdminDashboard({ allProducts }) {
+export default function AdminDashboard({ allProducts, allOrders = [] }) {
   const [pin, setPin] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [products, setProducts] = useState(allProducts);
+  const [orders, setOrders] = useState(allOrders);
   const [activeTab, setActiveTab] = useState("products");
+  const [orderView, setOrderView] = useState("active");
   const [selectedImage, setSelectedImage] = useState(null); // Stores image URL to view full size
+
+  useEffect(() => {
+    setOrders(allOrders);
+    console.log("LIVE DATABASE ORDERS:", allOrders);
+  }, [allOrders]);
 
   // NEW: State for our Add Product Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -37,6 +44,27 @@ export default function AdminDashboard({ allProducts }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, price: newPrice, is_available: newStatus }),
     });
+  };
+  // 👇 NEW: Function to change the order status
+  const updateOrderStatus = async (orderId, newStatus) => {
+    // 1. Instantly update the UI so it feels lightning fast
+    setOrders(
+      orders.map((order) =>
+        order.id === orderId ? { ...order, status: newStatus } : order,
+      ),
+    );
+
+    // 2. Silently update the database in the background
+    try {
+      await fetch("/api/orders/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, newStatus }),
+      });
+    } catch (error) {
+      console.error("Failed to update status", error);
+      alert("Uh oh! Failed to save the status to the database.");
+    }
   };
 
   // NEW: Function to handle adding a product
@@ -144,6 +172,16 @@ export default function AdminDashboard({ allProducts }) {
       </div>
     );
   }
+  // Live orders
+  const displayedOrders = orders.filter((order) => {
+    if (orderView === "active") {
+      // Only show Pending and Out for Delivery
+      return order.status !== "Completed" && order.status !== "Cancelled";
+    } else {
+      // Only show Completed and Cancelled
+      return order.status === "Completed" || order.status === "Cancelled";
+    }
+  });
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -301,6 +339,141 @@ export default function AdminDashboard({ allProducts }) {
           </div>
         )}
       </div>
+
+      {/* --- LIVE ORDERS TAB --- */}
+      {activeTab === "orders" && (
+        <div className="w-full block">
+          {/* 👇 UPGRADED HEADER WITH TOGGLES 👇 */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            <h1 className="text-3xl font-bold text-gray-800">
+              {orderView === "active" ? "Active Orders" : "Order History"}
+            </h1>
+
+            <div className="bg-gray-100 p-1 rounded-lg flex gap-1">
+              <button
+                onClick={() => setOrderView("active")}
+                className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${
+                  orderView === "active"
+                    ? "bg-white text-gray-900 shadow-sm border border-gray-200"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                }`}
+              >
+                🟢 Active Board
+              </button>
+              <button
+                onClick={() => setOrderView("history")}
+                className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${
+                  orderView === "history"
+                    ? "bg-white text-gray-900 shadow-sm border border-gray-200"
+                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                }`}
+              >
+                📁 History
+              </button>
+            </div>
+          </div>
+
+          <div className="w-full max-w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto block">
+            <table className="w-full min-w-full text-left border-collapse whitespace-nowrap">
+              <thead>
+                <tr className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider border-b border-gray-200">
+                  <th className="p-4 font-semibold w-16">ID</th>
+                  <th className="p-4 font-semibold">Customer Details</th>
+                  <th className="p-4 font-semibold">Delivery Area</th>
+                  <th className="p-4 font-semibold">Grand Total</th>
+                  <th className="p-4 font-semibold text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {/* 👇 CHANGE: Map through displayedOrders instead of orders 👇 */}
+                {displayedOrders.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="5"
+                      className="p-8 text-center text-gray-500 font-medium"
+                    >
+                      {orderView === "active"
+                        ? "You're all caught up! No active orders right now."
+                        : "No completed orders yet."}
+                    </td>
+                  </tr>
+                ) : (
+                  displayedOrders.map((order) => (
+                    <tr
+                      key={order.id}
+                      className="hover:bg-blue-50/50 transition-colors"
+                    >
+                      <td className="p-4 font-black text-gray-900">
+                        #{order.id}
+                      </td>
+                      <td className="p-4">
+                        <p className="font-bold text-sm text-gray-900">
+                          {order.customer_name}
+                        </p>
+                        <p className="text-xs text-gray-600 mt-0.5">
+                          📞 {order.customer_phone}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                          {order.customer_address}
+                        </p>
+                      </td>
+                      <td className="p-4">
+                        <p className="text-sm font-medium text-gray-800 line-clamp-1">
+                          {order.delivery_area}
+                        </p>
+                        <p className="text-xs text-gray-500 font-bold mt-0.5">
+                          Fee: ₱{order.delivery_fee}
+                        </p>
+                      </td>
+                      <td className="p-4 font-black text-lg text-green-600">
+                        ₱{order.grand_total}
+                      </td>
+                      <td className="p-4 text-center">
+                        <div className="flex flex-col items-center gap-2">
+                          <select
+                            value={order.status}
+                            onChange={(e) =>
+                              updateOrderStatus(order.id, e.target.value)
+                            }
+                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider outline-none cursor-pointer border-2 transition-colors text-center w-32 appearance-none
+                                ${
+                                  order.status === "Pending"
+                                    ? "bg-yellow-50 text-yellow-700 border-yellow-300 hover:bg-yellow-100"
+                                    : order.status === "Completed"
+                                      ? "bg-green-50 text-green-700 border-green-300 hover:bg-green-100"
+                                      : "bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100"
+                                }
+                              `}
+                          >
+                            <option value="Pending">Pending</option>
+                            <option value="Out for Delivery">
+                              Out for Delivery
+                            </option>
+                            <option value="Completed">Completed</option>
+                            <option value="Cancelled">Cancelled</option>
+                          </select>
+
+                          <a
+                            href={`https://wa.me/63${order.customer_phone.replace(/^0+/, "")}?text=${encodeURIComponent(
+                              `Hi ${order.customer_name}! This is ZT Trading. Just an update regarding your order (#${order.id}): The status is now [${order.status}]. 🛵💨`,
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] font-bold text-gray-500 hover:text-green-600 flex items-center gap-1 transition-colors bg-gray-100 hover:bg-green-50 px-3 py-1 rounded-full border border-gray-200"
+                            title="Send WhatsApp Update"
+                          >
+                            <span className="text-sm">💬</span> Notify
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* --- ADD PRODUCT MODAL --- */}
       {isModalOpen && (
