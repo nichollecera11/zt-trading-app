@@ -2,20 +2,32 @@
 import { useState, useEffect } from "react";
 
 export default function AdminDashboard({ allProducts, allOrders = [] }) {
+  // ==========================================
+  // 1. ALL STATES (Organized together)
+  // ==========================================
   const [pin, setPin] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
   const [products, setProducts] = useState(allProducts);
   const [orders, setOrders] = useState(allOrders);
+  
   const [activeTab, setActiveTab] = useState("products");
   const [orderView, setOrderView] = useState("active");
-  const [selectedImage, setSelectedImage] = useState(null); // Stores image URL to view full size
+  
+  const [selectedImage, setSelectedImage] = useState(null);
 
-  useEffect(() => {
-    setOrders(allOrders);
-    console.log("LIVE DATABASE ORDERS:", allOrders);
-  }, [allOrders]);
+  // --- NEW: Product Manager States (Sliding Form) ---
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [editingProductId, setEditingProductId] = useState(null);
+  const [productForm, setProductForm] = useState({
+    name: "",
+    price: "",
+    category_id: 1, 
+    description: "",
+    image_url: "" 
+  });
 
-  // NEW: State for our Add Product Modal
+  // --- OLD: Modal States (Kept as requested) ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newProduct, setNewProduct] = useState({
     name: "",
@@ -23,38 +35,54 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     category_id: 1,
     image_url: "",
   });
-  const [editingProduct, setEditingProduct] = useState(null); // NEW: State for our Edit Product Modal
+  const [editingProduct, setEditingProduct] = useState(null);
 
-  const SECRET_PIN = "1234";
 
-  const handleLogin = (e) => {
+  // ==========================================
+  // 2. EFFECTS
+  // ==========================================
+  useEffect(() => {
+    setOrders(allOrders);
+    console.log("LIVE DATABASE ORDERS:", allOrders);
+  }, [allOrders]);
+
+
+  // ==========================================
+  // 3. AUTHENTICATION FUNCTION
+  // ==========================================
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (pin === SECRET_PIN) setIsAuthenticated(true);
-    else alert("Incorrect PIN");
+    try {
+      const res = await fetch("/api/admin/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pin }),
+      });
+
+      if (res.ok) {
+        setIsAuthenticated(true);
+      } else {
+        alert("🚨 Incorrect PIN! Access Denied.");
+        setPin("");
+      }
+    } catch (error) {
+      alert("Something went wrong checking the PIN.");
+    }
   };
 
-  const updateProduct = async (id, newPrice, newStatus) => {
-    setProducts(
-      products.map((p) =>
-        p.id === id ? { ...p, price: newPrice, is_available: newStatus } : p,
-      ),
-    );
-    await fetch("/api/admin", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, price: newPrice, is_available: newStatus }),
-    });
-  };
-  // 👇 NEW: Function to change the order status
+
+  // ==========================================
+  // 4. ORDER MANAGEMENT FUNCTIONS
+  // ==========================================
   const updateOrderStatus = async (orderId, newStatus) => {
-    // 1. Instantly update the UI so it feels lightning fast
+    // 1. Instantly update the UI
     setOrders(
       orders.map((order) =>
         order.id === orderId ? { ...order, status: newStatus } : order,
       ),
     );
 
-    // 2. Silently update the database in the background
+    // 2. Silently update the database
     try {
       await fetch("/api/orders/status", {
         method: "POST",
@@ -67,7 +95,68 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     }
   };
 
-  // NEW: Function to handle adding a product
+
+  // ==========================================
+  // 5. NEW PRODUCT FUNCTIONS (Sliding Form)
+  // ==========================================
+  const handleDeleteProduct = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    
+    setProducts(products.filter((p) => p.id !== id));
+    await fetch(`/api/products?id=${id}`, { method: "DELETE" });
+  };
+
+  const handleSaveProduct = async (e) => {
+    e.preventDefault();
+
+    if (editingProductId) {
+      // 🛠 EDIT EXISTING PRODUCT
+      const updatedProduct = { ...productForm, id: editingProductId };
+      setProducts(
+        products.map((p) => (p.id === editingProductId ? updatedProduct : p)),
+      );
+
+      await fetch("/api/products", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedProduct),
+      });
+    } else {
+      // 🟢 ADD NEW PRODUCT
+      const res = await fetch("/api/products", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(productForm),
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        setProducts([...products, { ...productForm, id: data.id }]);
+      }
+    }
+
+    setProductForm({ name: "", price: "", category_id: 1, description: "", image_url: "" });
+    setIsAddingProduct(false);
+    setEditingProductId(null);
+  };
+
+
+  // ==========================================
+  // 6. OLD PRODUCT FUNCTIONS (Kept as requested)
+  // ==========================================
+  const updateProduct = async (id, newPrice, newStatus) => {
+    setProducts(
+      products.map((p) =>
+        p.id === id ? { ...p, price: newPrice, is_available: newStatus } : p,
+      ),
+    );
+    await fetch("/api/admin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, price: newPrice, is_available: newStatus }),
+    });
+  };
+
   const handleAddProduct = async (e) => {
     e.preventDefault();
     const res = await fetch("/api/admin/add", {
@@ -78,7 +167,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
 
     if (res.ok) {
       const data = await res.json();
-      // Instantly add it to the screen
       setProducts([
         ...products,
         {
@@ -89,16 +177,13 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
           is_available: true,
         },
       ]);
-      // Close the modal and reset the form
       setIsModalOpen(false);
       setNewProduct({ name: "", price: "", category_id: 1, image_url: "" });
     }
   };
 
-  // NEW: Function to handle saving the edited product
   const handleEditSubmit = async (e) => {
     e.preventDefault();
-
     try {
       const res = await fetch("/api/admin/edit", {
         method: "POST",
@@ -107,14 +192,11 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       });
 
       if (res.ok) {
-        // INSTANT UI MAGIC: Find the old product in the list and replace it with the new edited one
         setProducts(
           products.map((p) =>
             p.id === editingProduct.id ? editingProduct : p,
           ),
         );
-
-        // Close the modal
         setEditingProduct(null);
       } else {
         alert("Something went wrong trying to edit the product.");
@@ -124,7 +206,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     }
   };
 
-  // NEW: Function to handle deleting a product
   const handleDelete = async (productId) => {
     const isConfirmed = window.confirm(
       "Are you sure you want to delete this product for good? This cannot be undone.",
@@ -138,7 +219,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       });
 
       if (response.ok) {
-        // INSTANT DISAPPEAR MAGIC: Filter out the product that matches this ID
         setProducts(products.filter((product) => product.id !== productId));
       } else {
         alert("Something went wrong trying to delete.");
@@ -148,31 +228,49 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     }
   };
 
+
+  // ==========================================
+  // 7. SECURITY GATE (Renders before dashboard)
+  // ==========================================
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
-        <form
-          onSubmit={handleLogin}
-          className="bg-white p-8 rounded-xl shadow-2xl max-w-sm w-full border-t-8 border-blue-600"
-        >
-          <h2 className="text-2xl font-black mb-6 text-center text-gray-800">
-            ZT TRADING
-          </h2>
-          <input
-            type="password"
-            placeholder="Enter Admin PIN"
-            value={pin}
-            onChange={(e) => setPin(e.target.value)}
-            className="w-full border-2 border-gray-200 p-3 rounded-lg mb-4 text-center text-2xl tracking-widest focus:border-blue-600 outline-none"
-          />
-          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors">
-            Access Control Room
-          </button>
-        </form>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-lg max-w-sm w-full border border-gray-100 text-center">
+          <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+            🔒
+          </div>
+          <h1 className="text-2xl font-black text-gray-900 mb-2">
+            Control Room
+          </h1>
+          <p className="text-sm text-gray-500 mb-6">
+            Enter your Master PIN to access the dashboard.
+          </p>
+
+          <form onSubmit={handleLogin} className="flex flex-col gap-4">
+            <input
+              type="password"
+              value={pin}
+              onChange={(e) => setPin(e.target.value)}
+              placeholder="Enter PIN"
+              className="w-full text-center text-2xl tracking-widest font-bold border-2 border-gray-200 rounded-xl p-4 focus:border-blue-500 focus:outline-none transition-colors"
+              autoFocus
+            />
+            <button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl transition-colors shadow-sm"
+            >
+              Unlock Dashboard
+            </button>
+          </form>
+        </div>
       </div>
     );
   }
-  // Live orders
+
+
+  // ==========================================
+  // 8. DATA FILTERS FOR RENDER
+  // ==========================================
   const displayedOrders = orders.filter((order) => {
     if (orderView === "active") {
       // Only show Pending and Out for Delivery
@@ -183,9 +281,14 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     }
   });
 
+  // 👇 Your existing `return (` starts right here 👇
+
   return (
     <div className="flex h-screen bg-gray-100">
-      {/* SIDEBAR */}
+      
+      {/* ========================================== */}
+      {/* 1. SIDEBAR NAVIGATION                        */}
+      {/* ========================================== */}
       <div className="w-64 bg-gray-900 text-white flex flex-col hidden md:flex">
         <div className="p-6">
           <h2 className="text-2xl font-black tracking-wider text-blue-400">
@@ -215,124 +318,398 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
         </nav>
       </div>
 
-      {/* MAIN CONTENT AREA */}
+      {/* ========================================== */}
+      {/* 2. MAIN CONTENT AREA (Where Tabs Render)     */}
+      {/* ========================================== */}
       <div className="flex-1 p-4 sm:p-8 overflow-y-auto relative">
-        {/* PRODUCTS TAB */}
+        
+        {/* -------------------------------------- */}
+        {/* TAB A: PRODUCTS / INVENTORY            */}
+        {/* -------------------------------------- */}
         {activeTab === "products" && (
-          <div>
-            <div className="flex justify-between items-center mb-8">
+          <div className="w-full block">
+            {/* Header & Add Button */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
               <h1 className="text-3xl font-bold text-gray-800">
-                Manage Inventory
+                Inventory Manager
               </h1>
               <button
-                onClick={() => setIsModalOpen(true)}
-                className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-bold shadow-md transition-colors"
+                onClick={() => {
+                  setProductForm({
+                    name: "",
+                    price: "",
+                    category_id: 1,
+                    description: "",
+                  });
+                  setEditingProductId(null);
+                  setIsAddingProduct(true);
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2"
               >
-                + Add New Product
+                <span>➕</span> Add Product
               </button>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[600px]">
+            {/* SLIDE-IN FORM: Add/Edit Product */}
+            {isAddingProduct && (
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8 animate-fade-in">
+                <h2 className="text-xl font-bold mb-4 text-gray-800">
+                  {editingProductId ? "✏️ Edit Product" : "📦 Add New Product"}
+                </h2>
+                <form
+                  onSubmit={handleSaveProduct}
+                  className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+                >
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Product Name
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                      value={productForm.name}
+                      onChange={(e) =>
+                        setProductForm({ ...productForm, name: e.target.value })
+                      }
+                      placeholder="e.g., S&R Roasted Chicken"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Price (₱)
+                    </label>
+                    <input
+                      required
+                      type="number"
+                      step="0.01"
+                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all font-bold text-green-700"
+                      value={productForm.price}
+                      onChange={(e) =>
+                        setProductForm({
+                          ...productForm,
+                          price: e.target.value,
+                        })
+                      }
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Category
+                    </label>
+                    <select
+                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                      value={productForm.category_id}
+                      onChange={(e) =>
+                        setProductForm({
+                          ...productForm,
+                          category_id: parseInt(e.target.value),
+                        })
+                      }
+                    >
+                      <option value={1}>
+                        Category 1 (e.g., Fresh Meat / Seafood)
+                      </option>
+                      <option value={2}>
+                        Category 2 (e.g., Pantry / Snacks)
+                      </option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Description (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                      value={productForm.description || ""}
+                      onChange={(e) =>
+                        setProductForm({
+                          ...productForm,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Brief details about the item..."
+                    />
+                  </div>
+
+                  {/* IMAGE URL FIELD */}
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Image URL
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full border border-gray-300 rounded-lg p-2.5 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-blue-600"
+                      value={productForm.image_url || ""}
+                      onChange={(e) =>
+                        setProductForm({ ...productForm, image_url: e.target.value })
+                      }
+                      placeholder="image link"
+                    />
+                  </div>
+
+                  {/* Form Action Buttons */}
+                  <div className="sm:col-span-2 flex justify-end gap-3 mt-4">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsAddingProduct(false);
+                        setEditingProductId(null);
+                      }}
+                      className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2.5 px-6 rounded-lg transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-6 rounded-lg transition-colors shadow-sm"
+                    >
+                      {editingProductId ? "Save Changes" : "Save Product"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* INVENTORY TABLE */}
+            <div className="w-full max-w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto block">
+              <table className="w-full min-w-full text-left border-collapse whitespace-nowrap">
                 <thead>
                   <tr className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider border-b border-gray-200">
-                    <th className="p-4 text-left font-semibold w-1/2">
-                      Product
-                    </th>
-                    <th className="p-4 text-center font-semibold">Price (₱)</th>
-                    <th className="p-4 text-center font-semibold">Status</th>
-                    <th className="p-4 text-right font-semibold">Actions</th>
+                    <th className="p-4 font-semibold w-16">ID</th>
+                    <th className="p-4 font-semibold w-20 text-center">Image</th>
+                    <th className="p-4 font-semibold">Product Info</th>
+                    <th className="p-4 font-semibold">Category</th>
+                    <th className="p-4 font-semibold">Price</th>
+                    <th className="p-4 font-semibold text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {products.map((product) => (
-                    <tr
-                      key={product.id}
-                      className="hover:bg-blue-50/50 transition-colors"
-                    >
-                      <td className="p-4">
-                        <div className="flex items-center gap-4">
-                          {/* The Image Lightbox */}
-                          {product.image_url ? (
-                            <div
-                              onClick={() =>
-                                setSelectedImage({
-                                  url: product.image_url,
-                                  name: product.name,
-                                })
-                              }
-                              className="cursor-pointer group relative shrink-0"
-                              title="Click to view full image"
-                            >
-                              <img
-                                src={product.image_url}
-                                alt={product.name}
-                                className="w-12 h-12 rounded-lg object-cover border border-gray-200 transition-transform group-hover:scale-105 shadow-sm"
-                              />
-                              <span className="absolute inset-0 bg-black/30 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-[10px] font-bold transition-opacity">
-                                View
-                              </span>
-                            </div>
-                          ) : (
-                            <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-400 shrink-0 border border-gray-200">
-                              No Img
-                            </div>
-                          )}
-
-                          {/* The Product Name */}
-                          <span className="font-semibold text-gray-800 text-sm">
-                            {product.name}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="p-4 text-center">
-                        <input
-                          type="number"
-                          defaultValue={product.price}
-                          onBlur={(e) =>
-                            updateProduct(
-                              product.id,
-                              e.target.value,
-                              product.is_available,
-                            )
-                          }
-                          className="border border-gray-300 p-2 rounded-md w-24 text-center focus:ring-2 focus:ring-blue-500 outline-none"
-                        />
-                      </td>
-                      <td className="p-4 text-center">
-                        <button
-                          onClick={() =>
-                            updateProduct(
-                              product.id,
-                              product.price,
-                              !product.is_available,
-                            )
-                          }
-                          className={`px-4 py-1.5 rounded-full text-xs font-bold w-28 uppercase tracking-wide ${product.is_available ? "bg-green-100 text-green-700 hover:bg-green-200" : "bg-red-100 text-red-700 hover:bg-red-200"}`}
-                        >
-                          {product.is_available ? "In Stock" : "Sold Out"}
-                        </button>
-                      </td>
-
-                      {/* Existing Actions Column */}
-                      <td className="p-4 text-right align-middle">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => setEditingProduct(product)}
-                            className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-colors"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(product.id)}
-                            className="px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-gray-100 text-gray-600 hover:bg-red-600 hover:text-white transition-colors"
-                          >
-                            Delete
-                          </button>
-                        </div>
+                  {products.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan="6"
+                        className="p-8 text-center text-gray-500 font-medium"
+                      >
+                        Your inventory is empty. Add a product to get started!
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    products.map((product) => (
+                      <tr
+                        key={product.id}
+                        className="hover:bg-blue-50/50 transition-colors"
+                      >
+                        <td className="p-4 font-black text-gray-900">
+                          #{product.id}
+                        </td>
+                        {/* IMAGE THUMBNAIL */}
+                        <td className="p-4 text-center">
+                          {product.image_url ? (
+                            <img 
+                              src={product.image_url} 
+                              alt={product.name} 
+                              className="w-12 h-12 rounded-lg object-cover border border-gray-200 shadow-sm mx-auto" 
+                            />
+                          ) : (
+                            <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-xl mx-auto border border-gray-200 text-gray-300">
+                              📦
+                            </div>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <p className="font-bold text-sm text-gray-900">
+                            {product.name}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                            {product.description || "No description provided."}
+                          </p>
+                        </td>
+                        <td className="p-4">
+                          <span
+                            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                              product.category_id === 1
+                                ? "bg-purple-100 text-purple-700 border border-purple-200"
+                                : "bg-pink-100 text-pink-700 border border-pink-200"
+                            }`}
+                          >
+                            Category {product.category_id}
+                          </span>
+                        </td>
+                        <td className="p-4 font-black text-lg text-green-600">
+                          ₱{parseFloat(product.price).toFixed(2)}
+                        </td>
+
+                        {/* Action Buttons (Edit / Delete) */}
+                        <td className="p-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => {
+                                setProductForm({
+                                  name: product.name,
+                                  price: product.price,
+                                  category_id: product.category_id,
+                                  description: product.description || "",
+                                  image_url: product.image_url || "",
+                                });
+                                setEditingProductId(product.id);
+                                setIsAddingProduct(true);
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                              }}
+                              className="text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg transition-colors border border-blue-100"
+                              title="Edit Product"
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              onClick={() => handleDeleteProduct(product.id)}
+                              className="text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition-colors border border-red-100"
+                              title="Delete Product"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* -------------------------------------- */}
+        {/* TAB B: LIVE ORDERS                     */}
+        {/* -------------------------------------- */}
+        {activeTab === "orders" && (
+          <div className="w-full block">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+              <h1 className="text-3xl font-bold text-gray-800">
+                {orderView === "active" ? "Active Orders" : "Order History"}
+              </h1>
+
+              <div className="bg-gray-100 p-1 rounded-lg flex gap-1">
+                <button
+                  onClick={() => setOrderView("active")}
+                  className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${
+                    orderView === "active"
+                      ? "bg-white text-gray-900 shadow-sm border border-gray-200"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                  }`}
+                >
+                  🟢 Active Board
+                </button>
+                <button
+                  onClick={() => setOrderView("history")}
+                  className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${
+                    orderView === "history"
+                      ? "bg-white text-gray-900 shadow-sm border border-gray-200"
+                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
+                  }`}
+                >
+                  📁 History
+                </button>
+              </div>
+            </div>
+
+            <div className="w-full max-w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto block">
+              <table className="w-full min-w-full text-left border-collapse whitespace-nowrap">
+                <thead>
+                  <tr className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider border-b border-gray-200">
+                    <th className="p-4 font-semibold w-16">ID</th>
+                    <th className="p-4 font-semibold">Customer Details</th>
+                    <th className="p-4 font-semibold">Delivery Area</th>
+                    <th className="p-4 font-semibold">Grand Total</th>
+                    <th className="p-4 font-semibold text-center">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {displayedOrders.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan="5"
+                        className="p-8 text-center text-gray-500 font-medium"
+                      >
+                        {orderView === "active"
+                          ? "You're all caught up! No active orders right now."
+                          : "No completed orders yet."}
+                      </td>
+                    </tr>
+                  ) : (
+                    displayedOrders.map((order) => (
+                      <tr
+                        key={order.id}
+                        className="hover:bg-blue-50/50 transition-colors"
+                      >
+                        <td className="p-4 font-black text-gray-900">
+                          #{order.id}
+                        </td>
+                        <td className="p-4">
+                          <p className="font-bold text-sm text-gray-900">
+                            {order.customer_name}
+                          </p>
+                          <p className="text-xs text-gray-600 mt-0.5">
+                            📞 {order.customer_phone}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                            {order.customer_address}
+                          </p>
+                        </td>
+                        <td className="p-4">
+                          <p className="text-sm font-medium text-gray-800 line-clamp-1">
+                            {order.delivery_area}
+                          </p>
+                          <p className="text-xs text-gray-500 font-bold mt-0.5">
+                            Fee: ₱{order.delivery_fee}
+                          </p>
+                        </td>
+                        <td className="p-4 font-black text-lg text-green-600">
+                          ₱{order.grand_total}
+                        </td>
+                        <td className="p-4 text-center">
+                          <div className="flex flex-col items-center gap-2">
+                            <select
+                              value={order.status}
+                              onChange={(e) =>
+                                updateOrderStatus(order.id, e.target.value)
+                              }
+                              className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider outline-none cursor-pointer border-2 transition-colors text-center w-32 appearance-none
+                                  ${
+                                    order.status === "Pending"
+                                      ? "bg-yellow-50 text-yellow-700 border-yellow-300 hover:bg-yellow-100"
+                                      : order.status === "Completed"
+                                        ? "bg-green-50 text-green-700 border-green-300 hover:bg-green-100"
+                                        : "bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100"
+                                  }
+                                `}
+                            >
+                              <option value="Pending">Pending</option>
+                              <option value="Out for Delivery">
+                                Out for Delivery
+                              </option>
+                              <option value="Completed">Completed</option>
+                              <option value="Cancelled">Cancelled</option>
+                            </select>
+
+                            <a
+                              href={`https://wa.me/63${order.customer_phone.replace(/^0+/, "")}?text=${encodeURIComponent(
+                                `Hi ${order.customer_name}! This is ZT Trading. Just an update regarding your order (#${order.id}): The status is now [${order.status}]. 🛵💨`,
+                              )}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] font-bold text-gray-500 hover:text-green-600 flex items-center gap-1 transition-colors bg-gray-100 hover:bg-green-50 px-3 py-1 rounded-full border border-gray-200"
+                              title="Send WhatsApp Update"
+                            >
+                              <span className="text-sm">💬</span> Notify
+                            </a>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -340,142 +717,11 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
         )}
       </div>
 
-      {/* --- LIVE ORDERS TAB --- */}
-      {activeTab === "orders" && (
-        <div className="w-full block">
-          {/* 👇 UPGRADED HEADER WITH TOGGLES 👇 */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-            <h1 className="text-3xl font-bold text-gray-800">
-              {orderView === "active" ? "Active Orders" : "Order History"}
-            </h1>
+      {/* ========================================== */}
+      {/* 3. POP-UP MODALS (Global Overlays)           */}
+      {/* ========================================== */}
 
-            <div className="bg-gray-100 p-1 rounded-lg flex gap-1">
-              <button
-                onClick={() => setOrderView("active")}
-                className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${
-                  orderView === "active"
-                    ? "bg-white text-gray-900 shadow-sm border border-gray-200"
-                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                }`}
-              >
-                🟢 Active Board
-              </button>
-              <button
-                onClick={() => setOrderView("history")}
-                className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${
-                  orderView === "history"
-                    ? "bg-white text-gray-900 shadow-sm border border-gray-200"
-                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                }`}
-              >
-                📁 History
-              </button>
-            </div>
-          </div>
-
-          <div className="w-full max-w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto block">
-            <table className="w-full min-w-full text-left border-collapse whitespace-nowrap">
-              <thead>
-                <tr className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider border-b border-gray-200">
-                  <th className="p-4 font-semibold w-16">ID</th>
-                  <th className="p-4 font-semibold">Customer Details</th>
-                  <th className="p-4 font-semibold">Delivery Area</th>
-                  <th className="p-4 font-semibold">Grand Total</th>
-                  <th className="p-4 font-semibold text-center">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {/* 👇 CHANGE: Map through displayedOrders instead of orders 👇 */}
-                {displayedOrders.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan="5"
-                      className="p-8 text-center text-gray-500 font-medium"
-                    >
-                      {orderView === "active"
-                        ? "You're all caught up! No active orders right now."
-                        : "No completed orders yet."}
-                    </td>
-                  </tr>
-                ) : (
-                  displayedOrders.map((order) => (
-                    <tr
-                      key={order.id}
-                      className="hover:bg-blue-50/50 transition-colors"
-                    >
-                      <td className="p-4 font-black text-gray-900">
-                        #{order.id}
-                      </td>
-                      <td className="p-4">
-                        <p className="font-bold text-sm text-gray-900">
-                          {order.customer_name}
-                        </p>
-                        <p className="text-xs text-gray-600 mt-0.5">
-                          📞 {order.customer_phone}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
-                          {order.customer_address}
-                        </p>
-                      </td>
-                      <td className="p-4">
-                        <p className="text-sm font-medium text-gray-800 line-clamp-1">
-                          {order.delivery_area}
-                        </p>
-                        <p className="text-xs text-gray-500 font-bold mt-0.5">
-                          Fee: ₱{order.delivery_fee}
-                        </p>
-                      </td>
-                      <td className="p-4 font-black text-lg text-green-600">
-                        ₱{order.grand_total}
-                      </td>
-                      <td className="p-4 text-center">
-                        <div className="flex flex-col items-center gap-2">
-                          <select
-                            value={order.status}
-                            onChange={(e) =>
-                              updateOrderStatus(order.id, e.target.value)
-                            }
-                            className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider outline-none cursor-pointer border-2 transition-colors text-center w-32 appearance-none
-                                ${
-                                  order.status === "Pending"
-                                    ? "bg-yellow-50 text-yellow-700 border-yellow-300 hover:bg-yellow-100"
-                                    : order.status === "Completed"
-                                      ? "bg-green-50 text-green-700 border-green-300 hover:bg-green-100"
-                                      : "bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100"
-                                }
-                              `}
-                          >
-                            <option value="Pending">Pending</option>
-                            <option value="Out for Delivery">
-                              Out for Delivery
-                            </option>
-                            <option value="Completed">Completed</option>
-                            <option value="Cancelled">Cancelled</option>
-                          </select>
-
-                          <a
-                            href={`https://wa.me/63${order.customer_phone.replace(/^0+/, "")}?text=${encodeURIComponent(
-                              `Hi ${order.customer_name}! This is ZT Trading. Just an update regarding your order (#${order.id}): The status is now [${order.status}]. 🛵💨`,
-                            )}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[10px] font-bold text-gray-500 hover:text-green-600 flex items-center gap-1 transition-colors bg-gray-100 hover:bg-green-50 px-3 py-1 rounded-full border border-gray-200"
-                            title="Send WhatsApp Update"
-                          >
-                            <span className="text-sm">💬</span> Notify
-                          </a>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* --- ADD PRODUCT MODAL --- */}
+      {/* MODAL: ADD PRODUCT (Old Version) */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
@@ -498,7 +744,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                   placeholder="e.g., S&R Beef Belly 1kg"
                 />
               </div>
-              {/* 2. 👉 PASTE THE NEW IMAGE URL INPUT RIGHT HERE 👈 */}
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">
                   Image URL
@@ -567,15 +812,16 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
           </div>
         </div>
       )}
-      {/* --- FULL IMAGE LIGHTBOX MODAL --- */}
+
+      {/* MODAL: IMAGE LIGHTBOX PREVIEW */}
       {selectedImage && (
         <div
           className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-[60] backdrop-blur-sm"
-          onClick={() => setSelectedImage(null)} // Click outside to close
+          onClick={() => setSelectedImage(null)}
         >
           <div
             className="bg-white rounded-2xl p-4 max-w-xl w-full relative shadow-2xl flex flex-col items-center"
-            onClick={(e) => e.stopPropagation()} // Prevent clicking inside from closing
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="w-full flex justify-between items-center mb-3 pb-2 border-b">
               <h3 className="font-bold text-gray-800 text-lg">
@@ -588,8 +834,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                 ✕
               </button>
             </div>
-
-            {/* Full Uncropped Image */}
             <div className="w-full max-h-[70vh] flex items-center justify-center overflow-hidden rounded-lg bg-gray-50 p-2 border">
               <img
                 src={selectedImage.url}
@@ -597,7 +841,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                 className="max-h-[65vh] max-w-full object-contain rounded-md"
               />
             </div>
-
             <button
               onClick={() => setSelectedImage(null)}
               className="mt-4 px-6 py-2 bg-gray-800 text-white font-semibold rounded-lg hover:bg-gray-900 transition-colors"
@@ -607,7 +850,8 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
           </div>
         </div>
       )}
-      {/* --- EDIT PRODUCT MODAL --- */}
+
+      {/* MODAL: EDIT PRODUCT (Old Version) */}
       {editingProduct && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
           <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
@@ -648,7 +892,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                   }
                   className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-2"
                 />
-                {/* Live Preview Box */}
                 {editingProduct.image_url && (
                   <div className="mt-2 p-2 border rounded-lg bg-gray-50 flex flex-col items-center justify-center">
                     <img
@@ -727,6 +970,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
           </div>
         </div>
       )}
+
     </div>
   );
 }
