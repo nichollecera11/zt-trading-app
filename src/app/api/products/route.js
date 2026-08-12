@@ -6,8 +6,9 @@ export async function POST(request) {
   try {
     const data = await request.json();
     const [result] = await pool.query(
-      `INSERT INTO products (category_id, name, price, description) VALUES (?, ?, ?, ?)`,
-      [data.category_id, data.name, data.price, data.description || '']
+      // 👇 NEW: Added image_url to the INSERT command
+      `INSERT INTO products (category_id, name, price, description, image_url) VALUES (?, ?, ?, ?, ?)`,
+      [data.category_id, data.name, data.price, data.description || '', data.image_url || '']
     );
     return NextResponse.json({ success: true, id: result.insertId }, { status: 200 });
   } catch (error) {
@@ -21,8 +22,9 @@ export async function PUT(request) {
   try {
     const data = await request.json();
     await pool.query(
-      `UPDATE products SET category_id = ?, name = ?, price = ?, description = ? WHERE id = ?`,
-      [data.category_id, data.name, data.price, data.description || '', data.id]
+      // 👇 NEW: Added image_url to the UPDATE command
+      `UPDATE products SET category_id = ?, name = ?, price = ?, description = ?, image_url = ? WHERE id = ?`,
+      [data.category_id, data.name, data.price, data.description || '', data.image_url || '', data.id]
     );
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {

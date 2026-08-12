@@ -438,7 +438,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                       />
                     </div>
 
-                    {/* IMAGE URL FIELD */}
+                    {/* IMAGE URL FIELD WITH LIVE PREVIEW */}
                     <div className="sm:col-span-2">
                       <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                         Image URL
@@ -448,13 +448,26 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                         className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-blue-600 bg-gray-50 focus:bg-white"
                         value={productForm.image_url || ""}
                         onChange={(e) =>
-                          setProductForm({
-                            ...productForm,
-                            image_url: e.target.value,
-                          })
+                          setProductForm({ ...productForm, image_url: e.target.value })
                         }
-                        placeholder="image link"
+                        placeholder="https://example.com/image.jpg"
                       />
+                      
+                      {/* 👇 LIVE PREVIEW BOX 👇 */}
+                      {productForm.image_url && (
+                        <div className="mt-3 p-3 border border-gray-200 rounded-lg bg-gray-50 flex flex-col items-center justify-center">
+                          <p className="text-xs text-gray-500 font-bold mb-2 uppercase tracking-wider">Image Preview</p>
+                          <img
+                            src={productForm.image_url}
+                            alt="Preview"
+                            className="max-h-40 rounded-lg object-contain shadow-sm border border-gray-200"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = "https://via.placeholder.com/150?text=Invalid+Image+URL";
+                            }}
+                          />
+                        </div>
+                      )}
                     </div>
 
                     {/* Form Action Buttons */}
