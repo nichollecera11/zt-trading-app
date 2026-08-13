@@ -7,14 +7,29 @@ export default function ProductFeed({ allProducts }) {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // 👇 1. ADD THIS: The Master Category Dictionary 👇
+  const CATEGORY_MAP = {
+    1: "🛒 S&R Essentials",
+    2: "🥩 Premium Local Meats",
+    3: "🥬 Fresh Produce",
+    4: "🏍️ Custom Pabili / Others"
+  };
+
+  // 👇 2. ADD THIS: Sync the database products with our new names 👇
+  const syncedProducts = allProducts.map(product => ({
+    ...product,
+    // If the ID exists in our map, use the new name! Otherwise, use the old DB name.
+    category_name: CATEGORY_MAP[product.category_id] || product.category_name 
+  }));
+
   // 1. Extract unique categories dynamically
   const categories = [
     "All",
-    ...new Set(allProducts.map((product) => product.category_name)),
+    ...new Set(syncedProducts.map((product) => product.category_name)),
   ];
 
   // 2. Filter products ONLY by search query first
-  const searchFilteredProducts = allProducts.filter((product) => {
+  const searchFilteredProducts = syncedProducts.filter((product) => {
     const searchLower = searchQuery.toLowerCase();
     const safeDescription = product.description || "";
     return (
@@ -37,6 +52,8 @@ export default function ProductFeed({ allProducts }) {
     activeCategory === "All"
       ? Object.keys(groupedProducts)
       : [activeCategory].filter((c) => groupedProducts[c]);
+
+      
 
   return (
     <div className="w-full">
