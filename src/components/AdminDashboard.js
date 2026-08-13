@@ -379,7 +379,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       {/* ========================================== */}
       {/* 2. MAIN CONTENT AREA (Where Tabs Render)     */}
       {/* ========================================== */}
-      <div className="flex-1 p-4 sm:p-8 overflow-y-auto relative">
+      <div className="flex-1 p-4 pb-24 sm:pb-8 sm:p-8 overflow-y-auto relative">
         {/* -------------------------------------- */}
         {/* TAB A: PRODUCTS / INVENTORY            */}
         {/* -------------------------------------- */}
