@@ -327,12 +327,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
           >
             📦 Products
           </button>
-          <button
-            onClick={() => setActiveTab("categories")}
-            className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${activeTab === "categories" ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-800"}`}
-          >
-            📁 Categories
-          </button>
+
           <button
             onClick={() => setActiveTab("orders")}
             className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${activeTab === "orders" ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-800"}`}
@@ -352,20 +347,13 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
           <span className="text-[10px] font-bold">Products</span>
         </button>
         <button
-          onClick={() => setActiveTab("categories")}
-          className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${activeTab === "categories" ? "text-blue-600 bg-blue-50 scale-105" : "text-gray-400 hover:text-gray-600"}`}
-        >
-          <span className="text-xl leading-none">📁</span>
-          <span className="text-[10px] font-bold">Categories</span>
-        </button>
-        <button
           onClick={() => setActiveTab("orders")}
           className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${activeTab === "orders" ? "text-blue-600 bg-blue-50 scale-105" : "text-gray-400 hover:text-gray-600"}`}
         >
           <span className="text-xl leading-none relative">
             📱
             {/* Optional: Add a little red dot indicator here if you have active orders! */}
-            {orders.filter(o => o.status === "Pending").length > 0 && (
+            {orders.filter((o) => o.status === "Pending").length > 0 && (
               <span className="absolute -top-1 -right-1 flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border border-white"></span>
@@ -616,14 +604,20 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                         </td>
                         <td className="p-4">
                           {(() => {
-                            const cat = MASTER_CATEGORIES.find(c => c.id === product.category_id);
+                            const cat = MASTER_CATEGORIES.find(
+                              (c) => c.id === product.category_id,
+                            );
                             return (
                               <span
                                 className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                                  cat ? cat.color : "bg-gray-100 text-gray-700 border-gray-200"
+                                  cat
+                                    ? cat.color
+                                    : "bg-gray-100 text-gray-700 border-gray-200"
                                 }`}
                               >
-                                {cat ? cat.name : `Unknown (ID: ${product.category_id})`}
+                                {cat
+                                  ? cat.name
+                                  : `Unknown (ID: ${product.category_id})`}
                               </span>
                             );
                           })()}
