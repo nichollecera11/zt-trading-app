@@ -327,7 +327,12 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
           >
             📦 Products
           </button>
-
+          <button
+            onClick={() => setActiveTab("analytics")}
+            className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${activeTab === "analytics" ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-800"}`}
+          >
+            📊 Earnings
+          </button>
           <button
             onClick={() => setActiveTab("orders")}
             className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${activeTab === "orders" ? "bg-blue-600 text-white" : "text-gray-300 hover:bg-gray-800"}`}
@@ -345,6 +350,13 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
         >
           <span className="text-xl leading-none">📦</span>
           <span className="text-[10px] font-bold">Products</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("analytics")}
+          className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${activeTab === "analytics" ? "text-blue-600 bg-blue-50 scale-105" : "text-gray-400 hover:text-gray-600"}`}
+        >
+          <span className="text-xl leading-none">📊</span>
+          <span className="text-[10px] font-bold">Earnings</span>
         </button>
         <button
           onClick={() => setActiveTab("orders")}
@@ -798,6 +810,125 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
             </div>
           </div>
         )}
+
+        {/* -------------------------------------- */}
+        {/* TAB C: EARNINGS & ANALYTICS            */}
+        {/* -------------------------------------- */}
+        {activeTab === "analytics" &&
+          (() => {
+            // 1. The Math: Calculate everything on the fly!
+            const completedOrders = orders.filter(
+              (o) => o.status === "Completed",
+            );
+            const pendingOrders = orders.filter(
+              (o) => o.status === "Pending" || o.status === "Out for Delivery",
+            );
+
+            const totalRevenue = completedOrders.reduce(
+              (sum, o) => sum + Number(o.grand_total || 0),
+              0,
+            );
+            const totalDeliveryFees = completedOrders.reduce(
+              (sum, o) => sum + Number(o.delivery_fee || 0),
+              0,
+            );
+            const totalProductSales = totalRevenue - totalDeliveryFees;
+
+            const expectedRevenue = pendingOrders.reduce(
+              (sum, o) => sum + Number(o.grand_total || 0),
+              0,
+            );
+
+            return (
+              <div className="w-full block animate-fade-in">
+                <h1 className="text-3xl font-bold text-gray-800 mb-8">
+                  Financial Overview
+                </h1>
+
+                {/* Top Row: Main Stat Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  {/* Card 1: Total Revenue */}
+                  <div className="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl p-6 text-white shadow-lg border border-green-800">
+                    <h3 className="text-green-100 font-bold text-sm mb-1 uppercase tracking-wider">
+                      Gross Revenue
+                    </h3>
+                    <p className="text-4xl font-black mb-2">
+                      ₱{totalRevenue.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-green-200">
+                      Total money collected from completed orders.
+                    </p>
+                  </div>
+
+                  {/* Card 2: Delivery Fees (Your direct profit/gas) */}
+                  <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                    <div className="flex justify-between items-start">
+                      <h3 className="text-gray-500 font-bold text-sm mb-1 uppercase tracking-wider">
+                        Delivery Earnings
+                      </h3>
+                      <span className="text-xl">🛵</span>
+                    </div>
+                    <p className="text-3xl font-black text-gray-900 mb-2">
+                      ₱{totalDeliveryFees.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Total delivery & service fees collected.
+                    </p>
+                  </div>
+
+                  {/* Card 3: Pending Cash */}
+                  <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                    <div className="flex justify-between items-start">
+                      <h3 className="text-gray-500 font-bold text-sm mb-1 uppercase tracking-wider">
+                        Pending / Uncollected
+                      </h3>
+                      <span className="text-xl">⏳</span>
+                    </div>
+                    <p className="text-3xl font-black text-yellow-600 mb-2">
+                      ₱{expectedRevenue.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      Expected cash from active/pending deliveries.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Bottom Row: Breakdown */}
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200">
+                  <h3 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">
+                    Business Breakdown
+                  </h3>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-50">
+                    <span className="text-gray-600 font-medium">
+                      Completed Orders
+                    </span>
+                    <span className="font-bold text-gray-900">
+                      {completedOrders.length}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-50">
+                    <span className="text-gray-600 font-medium">
+                      Cost of Goods Sold (approx)
+                    </span>
+                    <span className="font-bold text-gray-900">
+                      ₱{totalProductSales.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center py-3">
+                    <span className="text-gray-600 font-medium">
+                      Average Order Value
+                    </span>
+                    <span className="font-bold text-green-600">
+                      ₱
+                      {completedOrders.length > 0
+                        ? (totalRevenue / completedOrders.length).toFixed(2)
+                        : "0.00"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
       </div>
 
       {/* ========================================== */}
