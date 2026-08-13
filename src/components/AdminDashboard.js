@@ -342,6 +342,40 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
         </nav>
       </div>
 
+      {/* 👇 NEW: MOBILE BOTTOM NAVIGATION 👇 */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around p-2 z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pb-safe">
+        <button
+          onClick={() => setActiveTab("products")}
+          className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${activeTab === "products" ? "text-blue-600 bg-blue-50 scale-105" : "text-gray-400 hover:text-gray-600"}`}
+        >
+          <span className="text-xl leading-none">📦</span>
+          <span className="text-[10px] font-bold">Products</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("categories")}
+          className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${activeTab === "categories" ? "text-blue-600 bg-blue-50 scale-105" : "text-gray-400 hover:text-gray-600"}`}
+        >
+          <span className="text-xl leading-none">📁</span>
+          <span className="text-[10px] font-bold">Categories</span>
+        </button>
+        <button
+          onClick={() => setActiveTab("orders")}
+          className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${activeTab === "orders" ? "text-blue-600 bg-blue-50 scale-105" : "text-gray-400 hover:text-gray-600"}`}
+        >
+          <span className="text-xl leading-none relative">
+            📱
+            {/* Optional: Add a little red dot indicator here if you have active orders! */}
+            {orders.filter(o => o.status === "Pending").length > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border border-white"></span>
+              </span>
+            )}
+          </span>
+          <span className="text-[10px] font-bold">Orders</span>
+        </button>
+      </div>
+
       {/* ========================================== */}
       {/* 2. MAIN CONTENT AREA (Where Tabs Render)     */}
       {/* ========================================== */}
