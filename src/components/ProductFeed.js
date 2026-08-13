@@ -104,6 +104,20 @@ export default function ProductFeed({ allProducts }) {
                 )}
               </div>
 
+              {/* 👇 UPGRADED: Sleek Mobile-Friendly Custom Request Banner 👇 */}
+              <div className="mx-6 mb-8 bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white shadow-lg border border-gray-700 flex items-start gap-3">
+                <span className="text-2xl leading-none pt-0.5">🕵️‍♂️</span>
+                <div>
+                  <h3 className="text-base font-bold mb-1">
+                    Can't find an item?
+                  </h3>
+                  <p className="text-xs text-gray-300 leading-snug">
+                    List any unlisted S&R or local items in the{" "}
+                    <strong>Notes</strong> at checkout. We'll buy it for you!
+                  </p>
+                </div>
+              </div>
+
               {/* The Horizontal Swipe Container */}
               <div className="flex overflow-x-auto gap-4 px-6 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {groupedProducts[categoryName].map((product) => (

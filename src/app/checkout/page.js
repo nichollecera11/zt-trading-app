@@ -325,18 +325,24 @@ export default function Checkout() {
                 }
               />
             </div>
+            {/* 👇 UPGRADED: Custom Request & Notes Section 👇 */}
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">
-                Driver Notes (Optional)
+              <label className="block text-sm font-black text-gray-900 mb-1">
+                Custom "Pabili" Requests & Notes 📝
               </label>
-              <input
-                type="text"
-                placeholder="e.g. Near the blue gate"
-                className="w-full border rounded-lg p-3"
+              <p className="text-xs text-gray-500 mb-2 font-medium">
+                Can't find an item? List it here and we'll confirm its
+                availability and price!
+              </p>
+              <textarea
+                rows="3"
+                value={formData.notes || ""}
+                placeholder="e.g. Please add 1 whole S&R Cheese Pizza, and deliver near the blue gate."
+                className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-gray-900 focus:outline-none transition-all resize-none shadow-sm"
                 onChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
                 }
-              />
+              ></textarea>
             </div>
           </div>
 

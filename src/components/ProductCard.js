@@ -39,7 +39,7 @@ export default function ProductCard({ product }) {
         
         {/* Price & Action */}
         {/* 2. Added 'mt-auto' here! This acts like a spring, pushing the price and button to the absolute bottom */}
-        <div className="mt-auto pt-5 flex items-center justify-between">
+        <div className="mt-auto pt-5 flex items-center justify-between gap-2">
           <span className="text-xl font-black text-gray-900 tracking-tight">
             ₱{Number(product.price).toFixed(2)}
           </span>
