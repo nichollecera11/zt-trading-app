@@ -40,6 +40,31 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
   // ==========================================
   // 2. EFFECTS
   // ==========================================
+
+  // --- NEW: 4 Core Master Categories ---
+  const MASTER_CATEGORIES = [
+    {
+      id: 1,
+      name: "🛒 S&R Essentials",
+      color: "bg-blue-100 text-blue-700 border-blue-200",
+    },
+    {
+      id: 2,
+      name: "🥩 Premium Local Meats",
+      color: "bg-red-100 text-red-700 border-red-200",
+    },
+    {
+      id: 3,
+      name: "🥬 Fresh Produce",
+      color: "bg-green-100 text-green-700 border-green-200",
+    },
+    {
+      id: 4,
+      name: "🏍️ Custom Pabili / Others",
+      color: "bg-purple-100 text-purple-700 border-purple-200",
+    },
+  ];
+
   useEffect(() => {
     setOrders(allOrders);
     console.log("LIVE DATABASE ORDERS:", allOrders);
@@ -403,7 +428,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                         Category
                       </label>
                       <select
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all bg-gray-50 focus:bg-white"
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all font-medium text-gray-800 bg-gray-50 focus:bg-white"
                         value={productForm.category_id}
                         onChange={(e) =>
                           setProductForm({
@@ -412,12 +437,11 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                           })
                         }
                       >
-                        <option value={1}>
-                          Category 1 (e.g., Fresh Meat / Seafood)
-                        </option>
-                        <option value={2}>
-                          Category 2 (e.g., Pantry / Snacks)
-                        </option>
+                        {MASTER_CATEGORIES.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
@@ -448,22 +472,28 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                         className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all text-blue-600 bg-gray-50 focus:bg-white"
                         value={productForm.image_url || ""}
                         onChange={(e) =>
-                          setProductForm({ ...productForm, image_url: e.target.value })
+                          setProductForm({
+                            ...productForm,
+                            image_url: e.target.value,
+                          })
                         }
                         placeholder="https://example.com/image.jpg"
                       />
-                      
+
                       {/* 👇 LIVE PREVIEW BOX 👇 */}
                       {productForm.image_url && (
                         <div className="mt-3 p-3 border border-gray-200 rounded-lg bg-gray-50 flex flex-col items-center justify-center">
-                          <p className="text-xs text-gray-500 font-bold mb-2 uppercase tracking-wider">Image Preview</p>
+                          <p className="text-xs text-gray-500 font-bold mb-2 uppercase tracking-wider">
+                            Image Preview
+                          </p>
                           <img
                             src={productForm.image_url}
                             alt="Preview"
                             className="max-h-40 rounded-lg object-contain shadow-sm border border-gray-200"
                             onError={(e) => {
                               e.target.onerror = null;
-                              e.target.src = "https://via.placeholder.com/150?text=Invalid+Image+URL";
+                              e.target.src =
+                                "https://via.placeholder.com/150?text=Invalid+Image+URL";
                             }}
                           />
                         </div>
@@ -551,15 +581,18 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                           </p>
                         </td>
                         <td className="p-4">
-                          <span
-                            className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                              product.category_id === 1
-                                ? "bg-purple-100 text-purple-700 border border-purple-200"
-                                : "bg-pink-100 text-pink-700 border border-pink-200"
-                            }`}
-                          >
-                            Category {product.category_id}
-                          </span>
+                          {(() => {
+                            const cat = MASTER_CATEGORIES.find(c => c.id === product.category_id);
+                            return (
+                              <span
+                                className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                                  cat ? cat.color : "bg-gray-100 text-gray-700 border-gray-200"
+                                }`}
+                              >
+                                {cat ? cat.name : `Unknown (ID: ${product.category_id})`}
+                              </span>
+                            );
+                          })()}
                         </td>
                         <td className="p-4 font-black text-lg text-green-600">
                           ₱{parseFloat(product.price).toFixed(2)}
@@ -949,26 +982,24 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                   />
                 </div>
                 <div className="flex-1">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                     Category
                   </label>
                   <select
+                    className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all font-medium text-gray-800 bg-gray-50 focus:bg-white"
                     value={editingProduct.category_id}
                     onChange={(e) =>
                       setEditingProduct({
                         ...editingProduct,
-                        category_id: e.target.value,
+                        category_id: parseInt(e.target.value),
                       })
                     }
-                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
                   >
-                    <option value="1">S&R Food Service</option>
-                    <option value="2">Bakery & Pastries</option>
-                    <option value="3">Fresh Meat & Seafood</option>
-                    <option value="4">Imported Snacks</option>
-                    <option value="5">Frozen Goods</option>
-                    <option value="6">Beverages & Alcohol</option>
-                    <option value="7">Household Essentials</option>
+                    {MASTER_CATEGORIES.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
