@@ -5,6 +5,9 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
   // ==========================================
   // 1. ALL STATES (Organized together)
   // ==========================================
+
+  // --- NEW: Product Search State ---
+  const [productSearchQuery, setProductSearchQuery] = useState("");
   const [pin, setPin] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -298,13 +301,18 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
   // ==========================================
   const displayedOrders = orders.filter((order) => {
     if (orderView === "active") {
-      // Only show Pending and Out for Delivery
       return order.status !== "Completed" && order.status !== "Cancelled";
     } else {
-      // Only show Completed and Cancelled
       return order.status === "Completed" || order.status === "Cancelled";
     }
   });
+
+  // 👇 NEW: Filter products instantly based on the search query 👇
+  const filteredProducts = products.filter(
+    (product) =>
+      product.name.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
+      product.id.toString().includes(productSearchQuery),
+  );
 
   // 👇 Your existing `return (` starts right here 👇
 
@@ -385,26 +393,43 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
         {/* -------------------------------------- */}
         {activeTab === "products" && (
           <div className="w-full block">
-            {/* Header & Add Button */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+            {/* Header & Add Button & Search */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
               <h1 className="text-3xl font-bold text-gray-800">
                 Inventory Manager
               </h1>
-              <button
-                onClick={() => {
-                  setProductForm({
-                    name: "",
-                    price: "",
-                    category_id: 1,
-                    description: "",
-                  });
-                  setEditingProductId(null);
-                  setIsAddingProduct(true);
-                }}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center gap-2"
-              >
-                <span>➕</span> Add Product
-              </button>
+
+              <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                {/* 👇 The New Search Bar 👇 */}
+                <div className="relative w-full sm:w-72">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    🔍
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search by name or ID..."
+                    value={productSearchQuery}
+                    onChange={(e) => setProductSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all shadow-sm"
+                  />
+                </div>
+
+                <button
+                  onClick={() => {
+                    setProductForm({
+                      name: "",
+                      price: "",
+                      category_id: 1,
+                      description: "",
+                    });
+                    setEditingProductId(null);
+                    setIsAddingProduct(true);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 whitespace-nowrap"
+                >
+                  <span>➕</span> Add Product
+                </button>
+              </div>
             </div>
 
             {/* MODAL FORM: Add/Edit Product */}
@@ -574,17 +599,19 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
-                  {products.length === 0 ? (
+                  {filteredProducts.length === 0 ? (
                     <tr>
                       <td
                         colSpan="6"
                         className="p-8 text-center text-gray-500 font-medium"
                       >
-                        Your inventory is empty. Add a product to get started!
+                        {products.length === 0
+                          ? "Your inventory is empty. Add a product to get started!"
+                          : `No products found matching "${productSearchQuery}"`}
                       </td>
                     </tr>
                   ) : (
-                    products.map((product) => (
+                    filteredProducts.map((product) => (
                       <tr
                         key={product.id}
                         className="hover:bg-blue-50/50 transition-colors"
