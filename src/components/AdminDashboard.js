@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import Image from "next/image";
 
 export default function AdminDashboard({ allProducts, allOrders = [] }) {
   // ==========================================
@@ -622,9 +623,11 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                         {/* IMAGE THUMBNAIL */}
                         <td className="p-4 text-center">
                           {product.image_url ? (
-                            <img
+                            <Image
                               src={product.image_url}
                               alt={product.name}
+                              width={48}
+                              height={48}
                               className="w-12 h-12 rounded-lg object-cover border border-gray-200 shadow-sm mx-auto"
                             />
                           ) : (

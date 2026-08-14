@@ -135,21 +135,30 @@ export default function ProductFeed({ allProducts }) {
                 </div>
               </div>
 
-              {/* The Horizontal Swipe Container */}
-              <div className="flex overflow-x-auto gap-4 px-6 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {groupedProducts[categoryName].map((product) => (
-                  /* This wrapper div is the secret! 
-                    It forces your existing ProductCard into a fixed width 
-                    so it doesn't stretch and break the horizontal scroll.
-                  */
-                  <div
-                    key={product.id}
-                    className="snap-start flex-shrink-0 w-[48vw] min-w-[170px] md:w-[220px]"
-                  >
-                    <ProductCard product={product} />
-                  </div>
-                ))}
-              </div>
+              {/* 👇 UPGRADED: Conditional Layout (Swipe vs Grid) 👇 */}
+              {activeCategory === "All" ? (
+                /* 1. HORIZONTAL SWIPE (Used on the "All" tab) */
+                <div className="flex overflow-x-auto gap-4 px-6 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                  {groupedProducts[categoryName].map((product) => (
+                    <div
+                      key={product.id}
+                      className="snap-start flex-shrink-0 w-[48vw] min-w-[170px] md:w-[220px]"
+                    >
+                      <ProductCard product={product} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                /* 2. FULL GRID (Used when a specific category is clicked) */
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 px-6 pb-4">
+                  {groupedProducts[categoryName].map((product) => (
+                    <div key={product.id} className="w-full flex">
+                      {/* Flex ensures all cards in the grid stretch to be the same height */}
+                      <ProductCard product={product} />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))
         )}
