@@ -150,7 +150,7 @@ export default function ProductFeed({ allProducts }) {
                 </div>
               ) : (
                 /* 2. FULL GRID (Used when a specific category is clicked) */
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 px-6 pb-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 px-6 pb-4">
                   {groupedProducts[categoryName].map((product) => (
                     <div key={product.id} className="w-full flex">
                       {/* Flex ensures all cards in the grid stretch to be the same height */}
