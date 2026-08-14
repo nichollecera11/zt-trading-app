@@ -54,9 +54,9 @@ export default function ProductCard({ product }) {
             onClick={() => addItem(product)}
             className="w-full bg-gray-900 hover:bg-black text-white py-2 px-2 rounded-lg font-semibold transition-colors text-sm flex items-center justify-center gap-1 active:scale-95"
           >
-            <span>➕</span> 
+            <span>Add</span> 
             {/* Hides the word "Add" on tiny screens, shows it on tablets/laptops */}
-            <span className="hidden sm:inline">Add</span>
+            {/* <span className="hidden sm:inline">➕</span> */}
           </button>
         </div>
       </div>
