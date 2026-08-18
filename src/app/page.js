@@ -15,38 +15,53 @@ export default async function Home() {
   );
 
   return (
-    <main className="min-h-screen bg-[#0a0a09] text-white pb-24">
-      <header className="mb-6 flex flex-col items-center justify-center text-center px-4">
-        {/* 1. Brand Logo */}
-        <img
-          src="/images/logo-ui.png"
-          alt="SwiftBag Logo"
-          className="mt-6 w-28 h-28 object-contain drop-shadow-md"
-        />
+    <main
+      className="min-h-screen text-white pb-24 relative"
+      style={{
+        // Change 'store-bg.jpg' to your actual image filename
+        backgroundImage: 'url("/images/bg.png")',
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed", // This creates a premium parallax effect when scrolling
+      }}
+    >
+      {/* 👇 THE OVERLAY: Keeps your dark theme vibe and ensures text readability 👇 */}
+      <div className="absolute inset-0 bg-[#0a0a09]/85 z-0"></div>
 
-        {/* 2. Brand Title - Vivid Yellow Green (#d6eb1d) */}
-        <h1 className="text-4xl font-black text-[#d6eb1d] tracking-tight uppercase mt-3">
-          SWIFTBAG
-        </h1>
+      {/* Everything inside this div sits ON TOP of the background image and overlay */}
+      <div className="relative z-10">
+        <header className="mb-6 flex flex-col items-center justify-center text-center px-4 pt-4">
+          {/* 1. Brand Logo */}
+          <img
+            src="/images/logo-ui.png"
+            alt="SwiftBag Logo"
+            className="mt-6 w-28 h-28 object-contain drop-shadow-md"
+          />
 
-        {/* 3. Tagline - Soft Muted Accent (#c3afb7) */}
-        <p className="text-sm font-medium text-[#c3afb7] mt-2 tracking-wide max-w-sm">
-          Premium meats &amp; S&amp;R essentials, delivered straight to your
-          door.
-        </p>
+          {/* 2. Brand Title - Vivid Yellow Green (#d6eb1d) */}
+          <h1 className="text-4xl font-black text-[#d6eb1d] tracking-tight uppercase mt-3">
+            SWIFTBAG
+          </h1>
 
-        {/* 4. Link / Action - Olive (#acbf00) to Yellow Green (#d6eb1d) on hover */}
-        <Link
-          href="/about"
-          className="mt-4 text-xs font-bold text-[#acbf00] hover:text-[#d6eb1d] transition-colors uppercase tracking-wider"
-        >
-          About the Developer &rarr;
-        </Link>
-      </header>
+          {/* 3. Tagline - Soft Muted Accent (#c3afb7) */}
+          <p className="text-sm font-medium text-[#c3afb7] mt-2 tracking-wide max-w-sm">
+            Premium meats &amp; S&amp;R essentials, delivered straight to your
+            door.
+          </p>
 
-      {/* Main Content Feeds */}
-      <ProductFeed allProducts={products} />
-      <CartWidget />
+          {/* 4. Link / Action - Olive (#acbf00) to Yellow Green (#d6eb1d) on hover */}
+          <Link
+            href="/about"
+            className="mt-4 text-xs font-bold text-[#acbf00] hover:text-[#d6eb1d] transition-colors uppercase tracking-wider"
+          >
+            About the Developer &rarr;
+          </Link>
+        </header>
+
+        {/* Main Content Feeds */}
+        <ProductFeed allProducts={products} />
+        <CartWidget />
+      </div>
     </main>
   );
 }
