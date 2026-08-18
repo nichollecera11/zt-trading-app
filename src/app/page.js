@@ -19,7 +19,7 @@ export default async function Home() {
       <header className="mb-4 flex flex-col items-center justify-center text-center">
         {/* 1. The Big Centered Logo */}
         <img
-          src="/images/logo_ui.png"
+          src="/images/logo-ui.png"
           alt="ZT Trading Logo"
           className="mt-5 w-30 h-30 object-contain"
         />
