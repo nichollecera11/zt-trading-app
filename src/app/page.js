@@ -17,13 +17,13 @@ export default async function Home() {
   return (
     <main
       className="min-h-screen text-white pb-24 relative"
-      style={{
-        // Change 'store-bg.jpg' to your actual image filename
-        backgroundImage: 'url("/images/bg.png")',
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: "fixed", // This creates a premium parallax effect when scrolling
-      }}
+      // style={{
+      //   // Change 'store-bg.jpg' to your actual image filename
+      //   backgroundImage: 'url("/images/bg.png")',
+      //   backgroundSize: "cover",
+      //   backgroundPosition: "center",
+      //   backgroundAttachment: "fixed", // This creates a premium parallax effect when scrolling
+      // }}
     >
       {/* 👇 THE OVERLAY: Keeps your dark theme vibe and ensures text readability 👇 */}
       <div className="absolute inset-0 bg-[#0a0a09]/85 z-0"></div>
