@@ -8,7 +8,6 @@ export default function Checkout() {
   const items = useCart((state) => state.items);
   const clearCart = useCart((state) => state.clearCart);
 
-  // 👇 NEW: Pull in the new actions
   const increaseQuantity = useCart((state) => state.increaseQuantity);
   const decreaseQuantity = useCart((state) => state.decreaseQuantity);
   const removeItem = useCart((state) => state.removeItem);
@@ -45,7 +44,6 @@ export default function Checkout() {
     notes: "",
   });
 
-  // 👇 NEW: Load saved details when the page opens
   useEffect(() => {
     const savedCustomer = localStorage.getItem("zt_customer_details");
     if (savedCustomer) {
@@ -71,11 +69,10 @@ export default function Checkout() {
   const grandTotal = subtotal + selectedDistance.fee;
 
   const handleOrder = async (e) => {
-    // 👈 Notice we added 'async' here!
     e.preventDefault();
 
-    // 1. Build the exact same message for the receipt
-    let message = `*NEW ORDER (ZT Trading)*\n\n`;
+    // Updated the receipt header to SwiftBag!
+    let message = `*NEW ORDER (SwiftBag)*\n\n`;
     message += `*Name:* ${formData.name}\n`;
     message += `*Address:* ${formData.address}\n`;
     message += `*Distance/Area:* ${selectedDistance.name}\n`;
@@ -95,7 +92,6 @@ export default function Checkout() {
     const encodedMessage = encodeURIComponent(message);
 
     try {
-      // 👇 NEW MAGIC: Save to the Aiven Database First! 👇
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -113,7 +109,6 @@ export default function Checkout() {
         throw new Error("Database save failed");
       }
 
-      // 2. Route it to the correct app ONLY if the database save was successful!
       if (orderMethod === "whatsapp") {
         window.open(
           `https://wa.me/${YOUR_PHONE_NUMBER}?text=${encodedMessage}`,
@@ -131,7 +126,6 @@ export default function Checkout() {
         );
       }
 
-      // 3. Save their details for their next order
       localStorage.setItem(
         "zt_customer_details",
         JSON.stringify({
@@ -141,7 +135,6 @@ export default function Checkout() {
         }),
       );
 
-      // 4. Clear the cart and send them home
       clearCart();
       window.location.href = "/";
     } catch (error) {
@@ -152,15 +145,16 @@ export default function Checkout() {
     }
   };
 
+  // EMPTY CART STATE (Dark Mode)
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6 text-center">
-        <h2 className="text-2xl font-black text-gray-900 mb-4">
+      <div className="min-h-screen bg-[#0a0a09] flex flex-col items-center justify-center p-6 text-center">
+        <h2 className="text-2xl font-black text-white mb-4">
           Your cart is empty!
         </h2>
         <Link
           href="/"
-          className="bg-gray-900 text-white px-6 py-3 rounded-lg font-bold"
+          className="bg-[#acbf00] hover:bg-[#d6eb1d] text-[#0a0a09] px-6 py-3 rounded-lg font-bold transition-colors"
         >
           Go back to shop
         </Link>
@@ -168,68 +162,70 @@ export default function Checkout() {
     );
   }
 
+  // MAIN CHECKOUT STATE
   return (
-    <main className="min-h-screen bg-gray-50 py-12 px-6">
+    <main className="min-h-screen bg-[#0a0a09] py-12 px-6">
       <div className="max-w-xl mx-auto">
         <Link
           href="/"
-          className="text-sm font-bold text-gray-500 mb-6 inline-block hover:text-gray-900"
+          className="text-sm font-bold text-[#c3afb7] mb-6 inline-block hover:text-white transition-colors"
         >
-          ← Back to Shop
+          &larr; Back to Shop
         </Link>
 
-        <h1 className="text-3xl font-black text-gray-900 mb-8">Checkout</h1>
+        <h1 className="text-3xl font-black text-white mb-8">Checkout</h1>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
-          <h2 className="font-bold text-lg mb-4 border-b pb-2">
+        {/* ORDER SUMMARY BOX */}
+        <div className="bg-[#0a0a09] p-6 rounded-xl shadow-sm border border-[#c3afb7]/30 mb-8">
+          <h2 className="font-bold text-lg text-white mb-4 border-b border-[#c3afb7]/30 pb-2">
             Order Summary
           </h2>
 
           {items.map((item) => (
             <div
               key={item.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200"
+              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-[#c3afb7]/10 rounded-xl border border-[#c3afb7]/20 mb-3"
             >
               {/* Product Name & Single Price */}
               <div className="flex-1">
-                <h4 className="font-semibold text-gray-800 text-sm leading-tight">
+                <h4 className="font-semibold text-white text-sm leading-tight">
                   {item.name}
                 </h4>
-                <p className="text-xs font-bold text-gray-500">
+                <p className="text-xs font-bold text-[#c3afb7] mt-1">
                   ₱{Number(item.price).toFixed(2)} each
                 </p>
               </div>
 
               {/* Controls: Plus/Minus, Total, Remove */}
               <div className="flex items-center gap-3 self-end sm:self-auto">
-                <div className="flex items-center border border-gray-300 rounded-lg bg-white overflow-hidden shadow-sm">
+                <div className="flex items-center border border-[#c3afb7]/30 rounded-lg overflow-hidden shadow-sm bg-transparent">
                   <button
                     type="button"
                     onClick={() => decreaseQuantity(item.id)}
-                    className="px-3 py-1 text-gray-600 hover:bg-gray-100 font-bold transition-colors"
+                    className="px-3 py-1 text-[#c3afb7] hover:bg-[#c3afb7]/20 hover:text-white font-bold transition-colors"
                   >
                     -
                   </button>
-                  <span className="px-3 text-sm font-bold text-gray-800">
+                  <span className="px-3 text-sm font-bold text-white">
                     {item.quantity}
                   </span>
                   <button
                     type="button"
                     onClick={() => increaseQuantity(item.id)}
-                    className="px-3 py-1 text-gray-600 hover:bg-gray-100 font-bold transition-colors"
+                    className="px-3 py-1 text-[#c3afb7] hover:bg-[#c3afb7]/20 hover:text-white font-bold transition-colors"
                   >
                     +
                   </button>
                 </div>
 
-                <span className="text-sm font-bold text-gray-900 w-16 text-right">
+                <span className="text-sm font-bold text-[#d6eb1d] w-16 text-right">
                   ₱{(item.price * item.quantity).toFixed(2)}
                 </span>
 
                 <button
                   type="button"
                   onClick={() => removeItem(item.id)}
-                  className="text-gray-400 hover:text-red-600 transition-colors p-1"
+                  className="text-[#c3afb7] hover:text-red-500 transition-colors p-1"
                   title="Remove item"
                 >
                   ✕
@@ -238,38 +234,44 @@ export default function Checkout() {
             </div>
           ))}
 
-          <div className="mt-4 pt-4 border-t space-y-2">
-            <div className="flex justify-between text-sm text-gray-500 font-medium">
+          {/* TOTALS */}
+          <div className="mt-4 pt-4 border-t border-[#c3afb7]/30 space-y-2">
+            <div className="flex justify-between text-sm text-[#c3afb7] font-medium">
               <span>Subtotal</span>
-              <span>₱{subtotal.toFixed(2)}</span>
+              <span className="text-white">₱{subtotal.toFixed(2)}</span>
             </div>
-            <div className="flex justify-between text-sm text-gray-500 font-medium">
+            <div className="flex justify-between text-sm text-[#c3afb7] font-medium">
               <span>Delivery Fee</span>
-              <span>₱{selectedDistance.fee.toFixed(2)}</span>
+              <span className="text-white">
+                ₱{selectedDistance.fee.toFixed(2)}
+              </span>
             </div>
-            <div className="flex justify-between mt-2 pt-2 border-t font-black text-xl text-gray-900">
+            <div className="flex justify-between mt-2 pt-2 border-t border-[#c3afb7]/30 font-black text-xl text-white">
               <span>Grand Total</span>
-              <span>₱{grandTotal.toFixed(2)}</span>
+              <span className="text-[#d6eb1d]">₱{grandTotal.toFixed(2)}</span>
             </div>
           </div>
         </div>
 
+        {/* DELIVERY DETAILS FORM */}
         <form
           onSubmit={handleOrder}
-          className="bg-white p-6 rounded-xl shadow-sm border border-gray-100"
+          className="bg-[#0a0a09] p-6 rounded-xl shadow-sm border border-[#c3afb7]/30"
         >
-          <h2 className="font-bold text-lg mb-4">Delivery Details</h2>
+          <h2 className="font-bold text-lg text-white mb-4">
+            Delivery Details
+          </h2>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">
+              <label className="block text-sm font-bold text-white mb-1">
                 Full Name
               </label>
               <input
                 required
                 type="text"
                 value={formData.name}
-                className="w-full border rounded-lg p-3"
+                className="w-full bg-[#0a0a09] text-white border border-[#c3afb7]/30 rounded-lg p-3 focus:ring-1 focus:ring-[#d6eb1d] focus:border-[#d6eb1d] focus:outline-none transition-all placeholder:text-[#c3afb7]/50"
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
@@ -277,11 +279,11 @@ export default function Checkout() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">
+              <label className="block text-sm font-bold text-white mb-1">
                 Select Delivery Distance
               </label>
               <select
-                className="w-full border rounded-lg p-3 bg-white font-medium text-gray-700"
+                className="w-full bg-[#0a0a09] text-white border border-[#c3afb7]/30 rounded-lg p-3 focus:ring-1 focus:ring-[#d6eb1d] focus:border-[#d6eb1d] focus:outline-none transition-all font-medium"
                 onChange={(e) => {
                   const distance = deliveryDistances.find(
                     (d) => d.id === e.target.value,
@@ -290,7 +292,11 @@ export default function Checkout() {
                 }}
               >
                 {deliveryDistances.map((dist) => (
-                  <option key={dist.id} value={dist.id}>
+                  <option
+                    key={dist.id}
+                    value={dist.id}
+                    className="bg-[#0a0a09]"
+                  >
                     {dist.name} (+₱{dist.fee})
                   </option>
                 ))}
@@ -298,39 +304,40 @@ export default function Checkout() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">
+              <label className="block text-sm font-bold text-white mb-1">
                 Complete Address (Street, House No.)
               </label>
               <input
                 required
                 type="text"
                 value={formData.address}
-                className="w-full border rounded-lg p-3"
+                className="w-full bg-[#0a0a09] text-white border border-[#c3afb7]/30 rounded-lg p-3 focus:ring-1 focus:ring-[#d6eb1d] focus:border-[#d6eb1d] focus:outline-none transition-all placeholder:text-[#c3afb7]/50"
                 onChange={(e) =>
                   setFormData({ ...formData, address: e.target.value })
                 }
               />
             </div>
+
             <div>
-              <label className="block text-sm font-bold text-gray-700 mb-1">
+              <label className="block text-sm font-bold text-white mb-1">
                 Contact Number
               </label>
               <input
                 required
                 type="tel"
                 value={formData.phone}
-                className="w-full border rounded-lg p-3"
+                className="w-full bg-[#0a0a09] text-white border border-[#c3afb7]/30 rounded-lg p-3 focus:ring-1 focus:ring-[#d6eb1d] focus:border-[#d6eb1d] focus:outline-none transition-all placeholder:text-[#c3afb7]/50"
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
                 }
               />
             </div>
-            {/* 👇 UPGRADED: Custom Request & Notes Section 👇 */}
+
             <div>
-              <label className="block text-sm font-black text-gray-900 mb-1">
+              <label className="block text-sm font-black text-white mb-1">
                 Custom "Pabili" Requests & Notes 📝
               </label>
-              <p className="text-xs text-gray-500 mb-2 font-medium">
+              <p className="text-xs text-[#c3afb7] mb-2 font-medium">
                 Can't find an item? List it here and we'll confirm its
                 availability and price!
               </p>
@@ -338,7 +345,7 @@ export default function Checkout() {
                 rows="3"
                 value={formData.notes || ""}
                 placeholder="e.g. Please add 1 whole S&R Cheese Pizza, and deliver near the blue gate."
-                className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-gray-900 focus:outline-none transition-all resize-none shadow-sm"
+                className="w-full bg-[#0a0a09] text-white border border-[#c3afb7]/30 rounded-xl p-3 focus:ring-1 focus:ring-[#d6eb1d] focus:border-[#d6eb1d] focus:outline-none transition-all resize-none shadow-sm placeholder:text-[#c3afb7]/40"
                 onChange={(e) =>
                   setFormData({ ...formData, notes: e.target.value })
                 }
@@ -347,22 +354,26 @@ export default function Checkout() {
           </div>
 
           {/* The Disclaimer Notice */}
-          <div className="mt-6 bg-blue-50 border border-blue-100 text-blue-800 text-xs font-medium p-4 rounded-lg">
-            <strong>Notice:</strong> Exceptionally large bulk orders may be
-            subject to 4-wheel vehicle delivery rates. We will contact you to
-            confirm any adjustments before proceeding.
+          <div className="mt-6 bg-[#c3afb7]/10 border border-[#c3afb7]/30 text-[#c3afb7] text-xs font-medium p-4 rounded-lg">
+            <strong className="text-white">Notice:</strong> Exceptionally large
+            bulk orders may be subject to 4-wheel vehicle delivery rates. We
+            will contact you to confirm any adjustments before proceeding.
           </div>
 
-          {/* NEW: Select Ordering Platform */}
+          {/* Select Ordering Platform */}
           <div className="mt-8">
-            <label className="block text-sm font-black text-gray-900 mb-3 text-center">
+            <label className="block text-sm font-black text-white mb-3 text-center">
               How would you like to send this order?
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <button
                 type="button"
                 onClick={() => setOrderMethod("whatsapp")}
-                className={`p-3 rounded-xl border-2 font-bold text-sm transition-all flex flex-col items-center justify-center gap-1 ${orderMethod === "whatsapp" ? "border-green-500 bg-green-50 text-green-700 shadow-sm" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+                className={`p-3 rounded-xl border font-bold text-sm transition-all flex flex-col items-center justify-center gap-1 ${
+                  orderMethod === "whatsapp"
+                    ? "border-[#d6eb1d] bg-[#d6eb1d]/10 text-[#d6eb1d] shadow-sm"
+                    : "border-[#c3afb7]/30 text-[#c3afb7] hover:bg-[#c3afb7]/10"
+                }`}
               >
                 <span className="text-xl mb-1">🟢</span>
                 WhatsApp
@@ -371,7 +382,11 @@ export default function Checkout() {
               <button
                 type="button"
                 onClick={() => setOrderMethod("sms")}
-                className={`p-3 rounded-xl border-2 font-bold text-sm transition-all flex flex-col items-center justify-center gap-1 ${orderMethod === "sms" ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+                className={`p-3 rounded-xl border font-bold text-sm transition-all flex flex-col items-center justify-center gap-1 ${
+                  orderMethod === "sms"
+                    ? "border-[#d6eb1d] bg-[#d6eb1d]/10 text-[#d6eb1d] shadow-sm"
+                    : "border-[#c3afb7]/30 text-[#c3afb7] hover:bg-[#c3afb7]/10"
+                }`}
               >
                 <span className="text-xl mb-1">💬</span>
                 SMS Text
@@ -380,7 +395,11 @@ export default function Checkout() {
               <button
                 type="button"
                 onClick={() => setOrderMethod("copy")}
-                className={`p-3 rounded-xl border-2 font-bold text-sm transition-all flex flex-col items-center justify-center gap-1 ${orderMethod === "copy" ? "border-purple-500 bg-purple-50 text-purple-700 shadow-sm" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}
+                className={`p-3 rounded-xl border font-bold text-sm transition-all flex flex-col items-center justify-center gap-1 ${
+                  orderMethod === "copy"
+                    ? "border-[#d6eb1d] bg-[#d6eb1d]/10 text-[#d6eb1d] shadow-sm"
+                    : "border-[#c3afb7]/30 text-[#c3afb7] hover:bg-[#c3afb7]/10"
+                }`}
               >
                 <span className="text-xl mb-1">📋</span>
                 Copy (Messenger)
@@ -389,15 +408,10 @@ export default function Checkout() {
           </div>
 
           {/* Dynamic Submit Button */}
+          {/* Using SwiftBag's signature Vivid Olive -> Vivid Yellow Green transition */}
           <button
             type="submit"
-            className={`w-full text-white font-black text-lg p-4 rounded-xl mt-6 transition-all shadow-md ${
-              orderMethod === "whatsapp"
-                ? "bg-green-600 hover:bg-green-700"
-                : orderMethod === "sms"
-                  ? "bg-blue-600 hover:bg-blue-700"
-                  : "bg-purple-600 hover:bg-purple-700"
-            }`}
+            className="w-full bg-[#acbf00] hover:bg-[#d6eb1d] text-[#0a0a09] font-black text-lg p-4 rounded-xl mt-6 transition-all shadow-md active:scale-[0.98]"
           >
             {orderMethod === "whatsapp" && "Send via WhatsApp"}
             {orderMethod === "sms" && "Send via SMS text"}

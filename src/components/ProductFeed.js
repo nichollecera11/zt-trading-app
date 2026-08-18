@@ -54,13 +54,7 @@ export default function ProductFeed({ allProducts }) {
       : [activeCategory].filter((c) => groupedProducts[c]);
 
   return (
-    <div
-      className="w-full"
-      style={{
-        fontFamily:
-          '"Helvetica Now Display", "Helvetica Neue", Helvetica, Arial, sans-serif',
-      }}
-    >
+    <div className="w-full">
       {/* Premium Sticky Search Bar */}
       {/* Background matches the main page (#0a0a09) */}
       <div className="sticky top-0 z-40 bg-[#0a0a09] pt-5 pb-1 w-full ">

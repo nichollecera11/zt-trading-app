@@ -7,10 +7,7 @@ export default function ProductCard({ product }) {
   const addItem = useCart((state) => state.addItem);
 
   return (
-    <div 
-      className="h-full bg-[#0a0a09] rounded-xl shadow-sm border border-[#c3afb7]/30 overflow-hidden flex flex-col transition-transform hover:scale-[1.02]"
-      style={{ fontFamily: '"Helvetica Now Display", "Helvetica Neue", Helvetica, Arial, sans-serif' }}
-    >
+    <div className="h-full bg-[#0a0a09] rounded-xl shadow-sm border border-[#c3afb7]/30 overflow-hidden flex flex-col transition-transform hover:scale-[1.02]">
       {/* Image Placeholder */}
       {/* Changed background and dashed border to use the muted palette with opacity */}
       <div className="h-48 bg-[#c3afb7]/10 w-full flex items-center justify-center text-[#c3afb7] overflow-hidden relative flex-shrink-0">
@@ -54,13 +51,13 @@ export default function ProductCard({ product }) {
           <span className="text-base sm:text-lg font-black text-[#d6eb1d] tracking-tight mb-2">
             ₱{Number(product.price).toFixed(2)}
           </span>
-          
+
           {/* Button: Vivid Olive (#acbf00) hovering to Vivid Yellow Green (#d6eb1d) with Dark Gray text (#0a0a09) */}
           <button
             onClick={() => addItem(product)}
             className="w-full bg-[#acbf00] hover:bg-[#d6eb1d] text-[#0a0a09] py-2 px-2 rounded-lg font-semibold transition-colors text-sm flex items-center justify-center gap-1 active:scale-95"
           >
-            <span>Add</span> 
+            <span>Add</span>
             {/* <span className="hidden sm:inline">➕</span> */}
           </button>
         </div>

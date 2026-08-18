@@ -15,13 +15,7 @@ export default async function Home() {
   );
 
   return (
-    <main
-      className="min-h-screen bg-[#0a0a09] text-white pb-24"
-      style={{
-        fontFamily:
-          '"Helvetica Now Display", "Helvetica Neue", Helvetica, Arial, sans-serif',
-      }}
-    >
+    <main className="min-h-screen bg-[#0a0a09] text-white pb-24">
       <header className="mb-6 flex flex-col items-center justify-center text-center px-4">
         {/* 1. Brand Logo */}
         <img
