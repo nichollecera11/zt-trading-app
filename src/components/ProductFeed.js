@@ -12,14 +12,14 @@ export default function ProductFeed({ allProducts }) {
     1: "🛒 S&R Essentials",
     2: "🥩 Premium Local Meats",
     3: "🥬 Fresh Produce",
-    4: "🏍️ Custom Pabili / Others"
+    4: "🏍️ Custom Pabili / Others",
   };
 
   // 👇 2. ADD THIS: Sync the database products with our new names 👇
-  const syncedProducts = allProducts.map(product => ({
+  const syncedProducts = allProducts.map((product) => ({
     ...product,
     // If the ID exists in our map, use the new name! Otherwise, use the old DB name.
-    category_name: CATEGORY_MAP[product.category_id] || product.category_name 
+    category_name: CATEGORY_MAP[product.category_id] || product.category_name,
   }));
 
   // 1. Extract unique categories dynamically
@@ -53,30 +53,38 @@ export default function ProductFeed({ allProducts }) {
       ? Object.keys(groupedProducts)
       : [activeCategory].filter((c) => groupedProducts[c]);
 
-      
-
   return (
-    <div className="w-full">
+    <div
+      className="w-full"
+      style={{
+        fontFamily:
+          '"Helvetica Now Display", "Helvetica Neue", Helvetica, Arial, sans-serif',
+      }}
+    >
       {/* Premium Sticky Search Bar */}
-      <div className="sticky top-0 z-40 bg-white pt-5 pb-1 w-full ">
+      {/* Background matches the main page (#0a0a09) */}
+      <div className="sticky top-0 z-40 bg-[#0a0a09] pt-5 pb-1 w-full ">
         <div className="max-w-4xl mx-auto px-6">
           <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+            {/* Search Icon changed to muted accent */}
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c3afb7]">
               🔍
             </span>
+            {/* Dark Mode Input Field */}
             <input
               type="text"
               placeholder="Search for essentials, meat, etc..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-gray-200 rounded-xl py-3 pl-12 pr-4 text-gray-900 font-medium focus:outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 transition-all shadow-sm"
+              className="w-full bg-[#0a0a09] border border-[#c3afb7]/30 rounded-xl py-3 pl-12 pr-4 text-white font-medium focus:outline-none focus:border-[#d6eb1d] focus:ring-1 focus:ring-[#d6eb1d] transition-all shadow-sm placeholder:text-[#c3afb7]/50"
             />
           </div>
         </div>
       </div>
 
       {/* Premium Swipeable Category Tabs */}
-      <div className="bg-white border-b border-gray-200 sticky top-[72px] z-30 mb-8">
+      {/* Container background and bottom border matched to dark theme */}
+      <div className="bg-[#0a0a09] border-b border-[#c3afb7]/30 sticky top-[72px] z-30 mb-8">
         <div className="max-w-4xl mx-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-6">
           <div className="flex gap-2 py-4 w-max">
             {categories.map((category) => (
@@ -85,8 +93,8 @@ export default function ProductFeed({ allProducts }) {
                 onClick={() => setActiveCategory(category)}
                 className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
                   activeCategory === category
-                    ? "bg-gray-900 text-white shadow-md"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    ? "bg-[#d6eb1d] text-[#0a0a09] shadow-md" // Active: Vivid Yellow Green with Dark Text
+                    : "bg-[#c3afb7]/10 text-[#c3afb7] hover:bg-[#c3afb7]/20 hover:text-white" // Inactive: Muted Accent
                 }`}
               >
                 {category}
@@ -97,9 +105,9 @@ export default function ProductFeed({ allProducts }) {
       </div>
 
       <div className="max-w-4xl mx-auto">
-        {/* Not Found State */}
+        {/* Not Found State - Updated for dark mode */}
         {categoriesToShow.length === 0 ? (
-          <div className="mx-6 text-center py-12 text-gray-500 font-medium bg-white rounded-xl border border-gray-100 border-dashed">
+          <div className="mx-6 text-center py-12 text-[#c3afb7] font-medium bg-[#0a0a09] rounded-xl border border-[#c3afb7]/30 border-dashed">
             No products found for "{searchQuery}"
           </div>
         ) : (
@@ -108,13 +116,13 @@ export default function ProductFeed({ allProducts }) {
             <div key={categoryName} className="mb-10">
               {/* Row Header with dynamic "View All" button */}
               <div className="flex justify-between items-center mb-4 px-6">
-                <h2 className="text-xl font-black text-gray-900">
+                <h2 className="text-xl font-black text-white">
                   {categoryName}
                 </h2>
                 {activeCategory === "All" && (
                   <button
                     onClick={() => setActiveCategory(categoryName)}
-                    className="text-sm font-bold text-blue-600 hover:underline"
+                    className="text-sm font-bold text-[#acbf00] hover:text-[#d6eb1d] hover:underline transition-colors"
                   >
                     View All
                   </button>
@@ -122,22 +130,24 @@ export default function ProductFeed({ allProducts }) {
               </div>
 
               {/* 👇 UPGRADED: Sleek Mobile-Friendly Custom Request Banner 👇 */}
-              <div className="mx-6 mb-8 bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white shadow-lg border border-gray-700 flex items-start gap-3">
+              {/* Updated gradient to match the dark aesthetic with a subtle border */}
+              <div className="mx-6 mb-8 bg-gradient-to-br from-[#c3afb7]/10 to-[#0a0a09] rounded-xl p-4 text-white shadow-lg border border-[#c3afb7]/30 flex items-start gap-3">
                 <span className="text-2xl leading-none pt-0.5">🕵️‍♂️</span>
                 <div>
                   <h3 className="text-base font-bold mb-1">
                     Can't find an item?
                   </h3>
-                  <p className="text-xs text-gray-300 leading-snug">
+                  <p className="text-xs text-[#c3afb7] leading-snug">
                     List any unlisted S&R or local items in the{" "}
-                    <strong>Notes</strong> at checkout. We'll buy it for you!
+                    <strong className="text-white">Notes</strong> at checkout.
+                    We'll buy it for you!
                   </p>
                 </div>
               </div>
 
-              {/* 👇 UPGRADED: Conditional Layout (Swipe vs Grid) 👇 */}
+              {/* Conditional Layout (Swipe vs Grid) */}
               {activeCategory === "All" ? (
-                /* 1. HORIZONTAL SWIPE (Used on the "All" tab) */
+                /* 1. HORIZONTAL SWIPE */
                 <div className="flex overflow-x-auto gap-4 px-6 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                   {groupedProducts[categoryName].map((product) => (
                     <div
@@ -149,11 +159,10 @@ export default function ProductFeed({ allProducts }) {
                   ))}
                 </div>
               ) : (
-                /* 2. FULL GRID (Used when a specific category is clicked) */
+                /* 2. FULL GRID */
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 px-6 pb-4">
                   {groupedProducts[categoryName].map((product) => (
                     <div key={product.id} className="w-full flex">
-                      {/* Flex ensures all cards in the grid stretch to be the same height */}
                       <ProductCard product={product} />
                     </div>
                   ))}

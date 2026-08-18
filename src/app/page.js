@@ -15,34 +15,42 @@ export default async function Home() {
   );
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-24">
-      <header className="mb-4 flex flex-col items-center justify-center text-center">
-        {/* 1. The Big Centered Logo */}
+    <main
+      className="min-h-screen bg-[#0a0a09] text-white pb-24"
+      style={{
+        fontFamily:
+          '"Helvetica Now Display", "Helvetica Neue", Helvetica, Arial, sans-serif',
+      }}
+    >
+      <header className="mb-6 flex flex-col items-center justify-center text-center px-4">
+        {/* 1. Brand Logo */}
         <img
           src="/images/logo-ui.png"
-          alt="ZT Trading Logo"
-          className="mt-5 w-30 h-30 object-contain"
+          alt="SwiftBag Logo"
+          className="mt-6 w-28 h-28 object-contain drop-shadow-md"
         />
 
-        {/* 2. The Brand Title */}
-        <h1 className="text-4xl font-black text-gray-900 tracking-tight">
-          ZT TRADING
+        {/* 2. Brand Title - Vivid Yellow Green (#d6eb1d) */}
+        <h1 className="text-4xl font-black text-[#d6eb1d] tracking-tight uppercase mt-3">
+          SWIFTBAG
         </h1>
 
-        {/* 3. The Tagline */}
-        <p className="text-sm font-medium text-gray-500 mt-2 tracking-wide">
-          Premium meats & S&R essentials, delivered to your door.
+        {/* 3. Tagline - Soft Muted Accent (#c3afb7) */}
+        <p className="text-sm font-medium text-[#c3afb7] mt-2 tracking-wide max-w-sm">
+          Premium meats &amp; S&amp;R essentials, delivered straight to your
+          door.
         </p>
 
-        {/* 4. The About Link */}
+        {/* 4. Link / Action - Olive (#acbf00) to Yellow Green (#d6eb1d) on hover */}
         <Link
           href="/about"
-          className="mt-4 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors"
+          className="mt-4 text-xs font-bold text-[#acbf00] hover:text-[#d6eb1d] transition-colors uppercase tracking-wider"
         >
-          About the Developer
+          About the Developer &rarr;
         </Link>
       </header>
 
+      {/* Main Content Feeds */}
       <ProductFeed allProducts={products} />
       <CartWidget />
     </main>
