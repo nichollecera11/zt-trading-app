@@ -3,11 +3,17 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request) {
   try {
-    const { id, name, price, category_id, image_url } = await request.json();
+    // 1. Grab the 'tags' array along with the other fields
+    const { id, name, price, category_id, image_url, tags } = await request.json();
 
-    const query = 'UPDATE products SET name = ?, price = ?, category_id = ?, image_url = ? WHERE id = ?';
+    // 2. Convert the array to a JSON string for MySQL
+    const tagsJson = tags ? JSON.stringify(tags) : JSON.stringify([]);
+
+    // 3. Update the query to include the tags column (now we have 6 question marks)
+    const query = 'UPDATE products SET name = ?, price = ?, category_id = ?, image_url = ?, tags = ? WHERE id = ?';
     
-    await pool.query(query, [name, price, category_id, image_url || null, id]);
+    // 4. Pass the variables to MySQL in the exact order as the query
+    await pool.query(query, [name, price, category_id, image_url || null, tagsJson, id]);
 
     return NextResponse.json({ success: true, message: 'Product updated successfully' }, { status: 200 });
     

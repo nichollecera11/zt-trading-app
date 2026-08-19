@@ -34,6 +34,18 @@ export async function GET() {
       )
     `);
 
+    // 3. 👇 NEW: Upgrade Products table for Multi-Category Tags 👇
+    try {
+      await pool.query(`ALTER TABLE products ADD COLUMN tags JSON`);
+      console.log("Successfully added 'tags' column to products table.");
+    } catch (alterError) {
+      // If we run this script twice, MySQL complains the column already exists.
+      // We catch that specific error here so it doesn't break the whole setup.
+      console.log("Tags column likely already exists. Skipping alteration.");
+    }
+
+
+
     return NextResponse.json({ message: "Tables created successfully!" }, { status: 200 });
   } catch (error) {
     console.error("DB Setup Error:", error);

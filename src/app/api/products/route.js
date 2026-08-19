@@ -1,47 +1,64 @@
+// 👇 CHANGED: Only 3 sets of '../' here!
 import pool from '../../../lib/db';
 import { NextResponse } from 'next/server';
 
-// ADD A NEW PRODUCT (POST)
+// 🟢 ADD PRODUCT
 export async function POST(request) {
   try {
     const data = await request.json();
+    
+    // Convert tags array to JSON string safely
+    const tagsJson = data.tags ? JSON.stringify(data.tags) : JSON.stringify([]);
+
+    // Hardcode category_id as 1 to satisfy MySQL's NOT NULL rule
     const [result] = await pool.query(
-      // 👇 NEW: Added image_url to the INSERT command
-      `INSERT INTO products (category_id, name, price, description, image_url) VALUES (?, ?, ?, ?, ?)`,
-      [data.category_id, data.name, data.price, data.description || '', data.image_url || '']
+      `INSERT INTO products (name, price, category_id, description, image_url, tags) VALUES (?, ?, ?, ?, ?, ?)`,
+      [data.name, data.price, 1, data.description || '', data.image_url || '', tagsJson]
     );
+
     return NextResponse.json({ success: true, id: result.insertId }, { status: 200 });
   } catch (error) {
-    console.error("Failed to add product:", error);
-    return NextResponse.json({ error: "Database error" }, { status: 500 });
+    console.error("Add error:", error);
+    return NextResponse.json({ error: 'Failed to add product' }, { status: 500 });
   }
 }
 
-// EDIT AN EXISTING PRODUCT (PUT)
+// 🛠 EDIT PRODUCT
 export async function PUT(request) {
   try {
     const data = await request.json();
+    
+    // Convert tags array to JSON string safely
+    const tagsJson = data.tags ? JSON.stringify(data.tags) : JSON.stringify([]);
+
+    // Removed "category_id = ?" from the SET command to bypass the NULL error
     await pool.query(
-      // 👇 NEW: Added image_url to the UPDATE command
-      `UPDATE products SET category_id = ?, name = ?, price = ?, description = ?, image_url = ? WHERE id = ?`,
-      [data.category_id, data.name, data.price, data.description || '', data.image_url || '', data.id]
+      `UPDATE products SET name = ?, price = ?, description = ?, image_url = ?, tags = ? WHERE id = ?`,
+      [data.name, data.price, data.description || '', data.image_url || '', tagsJson, data.id]
     );
-    return NextResponse.json({ success: true }, { status: 200 });
+
+    return NextResponse.json({ success: true, message: 'Product updated successfully' }, { status: 200 });
   } catch (error) {
-    console.error("Failed to update product:", error);
-    return NextResponse.json({ error: "Database error" }, { status: 500 });
+    console.error("Edit error:", error);
+    return NextResponse.json({ error: 'Failed to update product' }, { status: 500 });
   }
 }
 
-// DELETE A PRODUCT (DELETE)
+// 🗑 DELETE PRODUCT
 export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    await pool.query(`DELETE FROM products WHERE id = ?`, [id]);
-    return NextResponse.json({ success: true }, { status: 200 });
+
+    if (!id) {
+      return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });
+    }
+
+    await pool.query('DELETE FROM products WHERE id = ?', [id]);
+
+    return NextResponse.json({ success: true, message: 'Product deleted successfully' }, { status: 200 });
   } catch (error) {
-    console.error("Failed to delete product:", error);
-    return NextResponse.json({ error: "Database error" }, { status: 500 });
+    console.error("Delete error:", error);
+    return NextResponse.json({ error: 'Failed to delete product' }, { status: 500 });
   }
 }

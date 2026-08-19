@@ -26,7 +26,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
   const [productForm, setProductForm] = useState({
     name: "",
     price: "",
-    category_id: 1,
+    tags: [],
     description: "",
     image_url: "",
   });
@@ -47,26 +47,17 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
 
   // --- NEW: 4 Core Master Categories ---
   const MASTER_CATEGORIES = [
-    {
-      id: 1,
-      name: "🛒 S&R Essentials",
-      color: "bg-blue-100 text-blue-700 border-blue-200",
-    },
-    {
-      id: 2,
-      name: "🥩 Premium Local Meats",
-      color: "bg-red-100 text-red-700 border-red-200",
-    },
-    {
-      id: 3,
-      name: "🥬 Fresh Produce",
-      color: "bg-green-100 text-green-700 border-green-200",
-    },
-    {
-      id: 4,
-      name: "🏍️ Custom Pabili / Others",
-      color: "bg-purple-100 text-purple-700 border-purple-200",
-    },
+    // --- S&R FMCG MACROS ---
+    { id: 1, name: "🧼 Household & Cleaning", color: "bg-cyan-100 text-cyan-700 border-cyan-200" },
+    { id: 2, name: "🧴 Personal Care & Health", color: "bg-pink-100 text-pink-700 border-pink-200" },
+    { id: 3, name: "🥫 Pantry & Cooking", color: "bg-amber-100 text-amber-700 border-amber-200" },
+    { id: 4, name: "🍫 Snacks & Beverages", color: "bg-rose-100 text-rose-700 border-rose-200" },
+    { id: 5, name: "👶 Baby & Pet Care", color: "bg-teal-100 text-teal-700 border-teal-200" },
+    
+    // --- SWIFTBAG CORE ---
+    { id: 6, name: "🥩 Meats, Seafood & Deli", color: "bg-red-100 text-red-700 border-red-200" },
+    { id: 7, name: "🥬 Fresh Produce", color: "bg-green-100 text-green-700 border-green-200" },
+    { id: 8, name: "🏍️ Custom Pabili / Others", color: "bg-purple-100 text-purple-700 border-purple-200" },
   ];
 
   useEffect(() => {
@@ -132,6 +123,22 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     await fetch(`/api/products?id=${id}`, { method: "DELETE" });
   };
 
+  // 👇 ADD THIS: Handles checkbox clicks 👇
+  const handleTagToggle = (tagName) => {
+    const currentTags = productForm.tags || [];
+    if (currentTags.includes(tagName)) {
+      setProductForm({
+        ...productForm,
+        tags: currentTags.filter((t) => t !== tagName),
+      });
+    } else {
+      setProductForm({
+        ...productForm,
+        tags: [...currentTags, tagName],
+      });
+    }
+  };
+
   const handleSaveProduct = async (e) => {
     e.preventDefault();
 
@@ -164,7 +171,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     setProductForm({
       name: "",
       price: "",
-      category_id: 1,
+      tags: [],
       description: "",
       image_url: "",
     });
@@ -420,7 +427,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                     setProductForm({
                       name: "",
                       price: "",
-                      category_id: 1,
+                      tags:[],
                       description: "",
                     });
                     setEditingProductId(null);
@@ -483,26 +490,31 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                         placeholder="0.00"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                        Category
+                    {/* 👇 UPGRADED: MULTI-SELECT CHECKBOX GRID 👇 */}
+                    <div className="sm:col-span-2">
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Categories & Tags (Select all that apply)
                       </label>
-                      <select
-                        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all font-medium text-gray-800 bg-gray-50 focus:bg-white"
-                        value={productForm.category_id}
-                        onChange={(e) =>
-                          setProductForm({
-                            ...productForm,
-                            category_id: parseInt(e.target.value),
-                          })
-                        }
-                      >
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50 p-4 rounded-xl border border-gray-200">
                         {MASTER_CATEGORIES.map((cat) => (
-                          <option key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </option>
+                          <label
+                            key={cat.id}
+                            className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                              (productForm.tags || []).includes(cat.name)
+                                ? "bg-blue-50 border-blue-300 shadow-sm"
+                                : "bg-white border-gray-200 hover:bg-gray-50 hover:border-blue-200"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300 cursor-pointer"
+                              checked={(productForm.tags || []).includes(cat.name)}
+                              onChange={() => handleTagToggle(cat.name)}
+                            />
+                            <span className="text-sm font-bold text-gray-700">{cat.name}</span>
+                          </label>
                         ))}
-                      </select>
+                      </div>
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1.5">
@@ -645,24 +657,35 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                           </p>
                         </td>
                         <td className="p-4">
-                          {(() => {
-                            const cat = MASTER_CATEGORIES.find(
-                              (c) => c.id === product.category_id,
-                            );
-                            return (
-                              <span
-                                className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                                  cat
-                                    ? cat.color
-                                    : "bg-gray-100 text-gray-700 border-gray-200"
-                                }`}
-                              >
-                                {cat
-                                  ? cat.name
-                                  : `Unknown (ID: ${product.category_id})`}
-                              </span>
-                            );
-                          })()}
+                          <div className="flex flex-wrap gap-2">
+                            {/* Safely parse the JSON string from the database */}
+                            {(() => {
+                              let parsedTags = [];
+                              try {
+                                parsedTags =
+                                  typeof product.tags === "string"
+                                    ? JSON.parse(product.tags)
+                                    : product.tags || [];
+                              } catch (e) {
+                                parsedTags = [];
+                              }
+
+                              return parsedTags.length > 0 ? (
+                                parsedTags.map((tag, idx) => (
+                                  <span
+                                    key={idx}
+                                    className="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border bg-gray-100 text-gray-700 border-gray-200"
+                                  >
+                                    {tag}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-xs text-gray-400 italic">
+                                  No Tags
+                                </span>
+                              );
+                            })()}
+                          </div>
                         </td>
                         <td className="p-4 font-black text-lg text-green-600">
                           ₱{parseFloat(product.price).toFixed(2)}
@@ -676,7 +699,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                                 setProductForm({
                                   name: product.name,
                                   price: product.price,
-                                  category_id: product.category_id,
+                                  tags: typeof product.tags === 'string' ? JSON.parse(product.tags) : (product.tags || []), // 👈 CHANGED THIS
                                   description: product.description || "",
                                   image_url: product.image_url || "",
                                 });
@@ -1018,23 +1041,33 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                     placeholder="0.00"
                   />
                 </div>
-                <div className="flex-1">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">
-                    Category
+                {/* 👇 UPGRADED: MULTI-SELECT CHECKBOX GRID 👇 */}
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Categories & Tags (Select all that apply)
                   </label>
-                  <select
-                    value={newProduct.category_id}
-                    onChange={(e) =>
-                      setNewProduct({
-                        ...newProduct,
-                        category_id: e.target.value,
-                      })
-                    }
-                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                  >
-                    <option value="1">Meats</option>
-                    <option value="2">S&R Items</option>
-                  </select>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    {MASTER_CATEGORIES.map((cat) => (
+                      <label
+                        key={cat.id}
+                        className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                          (productForm.tags || []).includes(cat.name)
+                            ? "bg-blue-50 border-blue-300 shadow-sm"
+                            : "bg-white border-gray-200 hover:bg-gray-50 hover:border-blue-200"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300 cursor-pointer"
+                          checked={(productForm.tags || []).includes(cat.name)}
+                          onChange={() => handleTagToggle(cat.name)}
+                        />
+                        <span className="text-sm font-bold text-gray-700">
+                          {cat.name}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
                 </div>
               </div>
               <div className="flex justify-end gap-3 mt-6">
