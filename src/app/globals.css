@@ -1,9 +1,17 @@
 @import "tailwindcss";
 
+
 /* 
   We removed the :root light/dark variables because SwiftBag 
   is strictly a dark-theme app controlled via layout.js 
 */
+
+/* 👇 Add this new block 👇 */
+@layer base {
+  input, textarea, select {
+    @apply !text-gray-900 !bg-white;
+  }
+}
 
 /* ZUSTAND CART WIDGET ANIMATIONS */
 @keyframes bounce-short {
