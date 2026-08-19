@@ -7,29 +7,30 @@ export default function ProductFeed({ allProducts }) {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // 👇 1. ADD THIS: The Master Category Dictionary 👇
-  const CATEGORY_MAP = {
-    1: "🛒 S&R Essentials",
-    2: "🥩 Premium Local Meats",
-    3: "🥬 Fresh Produce",
-    4: "🏍️ Custom Pabili / Others",
-  };
-
-  // 👇 2. ADD THIS: Sync the database products with our new names 👇
-  const syncedProducts = allProducts.map((product) => ({
-    ...product,
-    // If the ID exists in our map, use the new name! Otherwise, use the old DB name.
-    category_name: CATEGORY_MAP[product.category_id] || product.category_name,
-  }));
-
-  // 1. Extract unique categories dynamically
-  const categories = [
+  // 👇 1. UPGRADED: The 8 Macro Categories 👇
+  const CATEGORIES = [
     "All",
-    ...new Set(syncedProducts.map((product) => product.category_name)),
+    "🧼 Household & Cleaning",
+    "🧴 Personal Care & Health",
+    "🥫 Pantry & Cooking",
+    "🍫 Snacks & Beverages",
+    "👶 Baby & Pet Care",
+    "🥩 Meats, Seafood & Deli",
+    "🥬 Fresh Produce",
+    "🏍️ Custom Pabili / Others"
   ];
 
-  // 2. Filter products ONLY by search query first
-  const searchFilteredProducts = syncedProducts.filter((product) => {
+  // 👇 2. NEW: Safely extract the new JSON tags array from the database 👇
+  const getProductTags = (product) => {
+    try {
+      return typeof product.tags === 'string' ? JSON.parse(product.tags) : (product.tags || []);
+    } catch (e) {
+      return [];
+    }
+  };
+
+  // 3. Filter products ONLY by search query first
+  const searchFilteredProducts = allProducts.filter((product) => {
     const searchLower = searchQuery.toLowerCase();
     const safeDescription = product.description || "";
     return (
@@ -38,16 +39,21 @@ export default function ProductFeed({ allProducts }) {
     );
   });
 
-  // 3. Group the filtered products into their specific categories
+  // 4. UPGRADED: Group the filtered products by their new tags!
+  // Since a product can have multiple tags, it will automatically appear in all relevant rows.
   const groupedProducts = {};
-  searchFilteredProducts.forEach((product) => {
-    if (!groupedProducts[product.category_name]) {
-      groupedProducts[product.category_name] = [];
+  
+  CATEGORIES.slice(1).forEach((categoryName) => { // Skip "All"
+    const productsInThisCategory = searchFilteredProducts.filter(product => 
+      getProductTags(product).includes(categoryName)
+    );
+    
+    if (productsInThisCategory.length > 0) {
+      groupedProducts[categoryName] = productsInThisCategory;
     }
-    groupedProducts[product.category_name].push(product);
   });
 
-  // 4. Determine which category rows to display based on the active tab
+  // 5. Determine which category rows to display based on the active tab
   const categoriesToShow =
     activeCategory === "All"
       ? Object.keys(groupedProducts)
@@ -81,7 +87,7 @@ export default function ProductFeed({ allProducts }) {
       <div className="bg-[#0a0a09] border-b border-[#c3afb7]/30 sticky top-[72px] z-30 mb-8">
         <div className="max-w-4xl mx-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-6">
           <div className="flex gap-2 py-4 w-max">
-            {categories.map((category) => (
+            {CATEGORIES.map((category) => (
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
@@ -123,8 +129,7 @@ export default function ProductFeed({ allProducts }) {
                 )}
               </div>
 
-              {/* 👇 UPGRADED: Sleek Mobile-Friendly Custom Request Banner 👇 */}
-              {/* Updated gradient to match the dark aesthetic with a subtle border */}
+              {/* Sleek Mobile-Friendly Custom Request Banner */}
               <div className="mx-6 mb-8 bg-gradient-to-br from-[#c3afb7]/10 to-[#0a0a09] rounded-xl p-4 text-white shadow-lg border border-[#c3afb7]/30 flex items-start gap-3">
                 <span className="text-2xl leading-none pt-0.5">🕵️‍♂️</span>
                 <div>
