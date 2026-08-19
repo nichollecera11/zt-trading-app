@@ -48,16 +48,48 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
   // --- NEW: 4 Core Master Categories ---
   const MASTER_CATEGORIES = [
     // --- S&R FMCG MACROS ---
-    { id: 1, name: "🧼 Household & Cleaning", color: "bg-cyan-100 text-cyan-700 border-cyan-200" },
-    { id: 2, name: "🧴 Personal Care & Health", color: "bg-pink-100 text-pink-700 border-pink-200" },
-    { id: 3, name: "🥫 Pantry & Cooking", color: "bg-amber-100 text-amber-700 border-amber-200" },
-    { id: 4, name: "🍫 Snacks & Beverages", color: "bg-rose-100 text-rose-700 border-rose-200" },
-    { id: 5, name: "👶 Baby & Pet Care", color: "bg-teal-100 text-teal-700 border-teal-200" },
-    
+    {
+      id: 1,
+      name: "🧼 Household & Cleaning",
+      color: "bg-cyan-100 text-cyan-700 border-cyan-200",
+    },
+    {
+      id: 2,
+      name: "🧴 Personal Care & Health",
+      color: "bg-pink-100 text-pink-700 border-pink-200",
+    },
+    {
+      id: 3,
+      name: "🥫 Pantry & Cooking",
+      color: "bg-amber-100 text-amber-700 border-amber-200",
+    },
+    {
+      id: 4,
+      name: "🍫 Snacks & Beverages",
+      color: "bg-rose-100 text-rose-700 border-rose-200",
+    },
+    {
+      id: 5,
+      name: "👶 Baby & Pet Care",
+      color: "bg-teal-100 text-teal-700 border-teal-200",
+    },
+
     // --- SWIFTBAG CORE ---
-    { id: 6, name: "🥩 Meats, Seafood & Deli", color: "bg-red-100 text-red-700 border-red-200" },
-    { id: 7, name: "🥬 Fresh Produce", color: "bg-green-100 text-green-700 border-green-200" },
-    { id: 8, name: "🏍️ Custom Pabili / Others", color: "bg-purple-100 text-purple-700 border-purple-200" },
+    {
+      id: 6,
+      name: "🥩 Meats, Seafood & Deli",
+      color: "bg-red-100 text-red-700 border-red-200",
+    },
+    {
+      id: 7,
+      name: "🥬 Fresh Produce",
+      color: "bg-green-100 text-green-700 border-green-200",
+    },
+    {
+      id: 8,
+      name: "🏍️ Custom Pabili / Others",
+      color: "bg-purple-100 text-purple-700 border-purple-200",
+    },
   ];
 
   useEffect(() => {
@@ -427,7 +459,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                     setProductForm({
                       name: "",
                       price: "",
-                      tags:[],
+                      tags: [],
                       description: "",
                     });
                     setEditingProductId(null);
@@ -508,10 +540,14 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                             <input
                               type="checkbox"
                               className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300 cursor-pointer"
-                              checked={(productForm.tags || []).includes(cat.name)}
+                              checked={(productForm.tags || []).includes(
+                                cat.name,
+                              )}
                               onChange={() => handleTagToggle(cat.name)}
                             />
-                            <span className="text-sm font-bold text-gray-700">{cat.name}</span>
+                            <span className="text-sm font-bold text-gray-700">
+                              {cat.name}
+                            </span>
                           </label>
                         ))}
                       </div>
@@ -649,12 +685,17 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                           )}
                         </td>
                         <td className="p-4">
-                          <p className="font-bold text-sm text-gray-900">
-                            {product.name}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
-                            {product.description || "No description provided."}
-                          </p>
+                          <div className="flex flex-col overflow-hidden">
+                            {/* Product Name */}
+                            <span className="font-bold text-gray-900 block truncate">
+                              {product.name}
+                            </span>
+
+                            {/* Product Description - Wrapped, Margined, and Clamped */}
+                            <p className="text-xs text-gray-500 mt-1 whitespace-normal line-clamp-2">
+                              {product.description}
+                            </p>
+                          </div>
                         </td>
                         <td className="p-4">
                           <div className="flex flex-wrap gap-2">
@@ -699,7 +740,10 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                                 setProductForm({
                                   name: product.name,
                                   price: product.price,
-                                  tags: typeof product.tags === 'string' ? JSON.parse(product.tags) : (product.tags || []), // 👈 CHANGED THIS
+                                  tags:
+                                    typeof product.tags === "string"
+                                      ? JSON.parse(product.tags)
+                                      : product.tags || [], // 👈 CHANGED THIS
                                   description: product.description || "",
                                   image_url: product.image_url || "",
                                 });
