@@ -19,6 +19,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
   const [orderView, setOrderView] = useState("active");
 
   const [selectedImage, setSelectedImage] = useState(null);
+  const [filterBrand, setFilterBrand] = useState("All");
 
   // --- NEW: Product Manager States (Sliding Form) ---
   const [isAddingProduct, setIsAddingProduct] = useState(false);
@@ -40,6 +41,16 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     image_url: "",
   });
   const [editingProduct, setEditingProduct] = useState(null);
+
+  // ==========================================
+  // 👇 2. ADD THE FILTER LOGIC RIGHT AFTER YOUR STATES 👇
+  // ==========================================
+
+  // Extract unique brands dynamically from your products list
+  const uniqueBrands = [
+    "All",
+    ...new Set(products.map((p) => p.brand || "S&R / Unbranded")),
+  ];
 
   // ==========================================
   // 2. EFFECTS
@@ -347,12 +358,23 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     }
   });
 
-  // 👇 NEW: Filter products instantly based on the search query 👇
-  const filteredProducts = products.filter(
-    (product) =>
+  // ==========================================
+  // 8. FILTERED PRODUCTS
+  // ==========================================
+  // Combine search (by name OR id) AND brand dropdown logic
+  const filteredProducts = products.filter((product) => {
+    // 1. Check if the product matches the search bar text OR the product ID
+    const matchesSearch =
       product.name.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
-      product.id.toString().includes(productSearchQuery),
-  );
+      product.id.toString().includes(productSearchQuery);
+
+    // 2. Check if the product matches the selected brand dropdown
+    const productBrand = product.brand || "S&R / Unbranded";
+    const matchesBrand = filterBrand === "All" || productBrand === filterBrand;
+
+    // 3. Keep the product only if it matches BOTH conditions
+    return matchesSearch && matchesBrand;
+  });
 
   // 👇 Your existing `return (` starts right here 👇
 
@@ -440,7 +462,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
               </h1>
 
               <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                {/* 👇 The New Search Bar 👇 */}
+                {/* 👇 The Search Bar 👇 */}
                 <div className="relative w-full sm:w-72">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
                     🔍
@@ -453,6 +475,20 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none transition-all shadow-sm"
                   />
                 </div>
+
+                {/* 🏢 Supplier Dropdown Filter */}
+                <select
+                  value={filterBrand}
+                  onChange={(e) => setFilterBrand(e.target.value)}
+                  // 👇 Changed to py-2 to match search bar height perfectly, and added shadow-sm!
+                  className="px-4 py-2 !bg-white !text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none font-medium w-full sm:w-auto shadow-sm"
+                >
+                  {uniqueBrands.map((brand) => (
+                    <option key={brand} value={brand}>
+                      {brand === "All" ? "🏢 All Suppliers" : brand}
+                    </option>
+                  ))}
+                </select>
 
                 <button
                   onClick={() => {
@@ -503,6 +539,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                         placeholder="e.g., S&R Roasted Chicken"
                       />
                     </div>
+
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                         Price (₱)
@@ -522,6 +559,26 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                         placeholder="0.00"
                       />
                     </div>
+                    {/* 👇 ADD THIS BRAND INPUT RIGHT HERE 👇 */}
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        🏢 Supplier / Brand Name
+                      </label>
+                      <input
+                        required
+                        type="text"
+                        className="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all bg-gray-50 focus:bg-white !text-gray-900"
+                        value={productForm.brand || ""}
+                        onChange={(e) =>
+                          setProductForm({
+                            ...productForm,
+                            brand: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., S&R, ZT-Trading"
+                      />
+                    </div>
+
                     {/* 👇 UPGRADED: MULTI-SELECT CHECKBOX GRID 👇 */}
                     <div className="sm:col-span-2">
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -1031,108 +1088,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       {/* ========================================== */}
       {/* 3. POP-UP MODALS (Global Overlays)           */}
       {/* ========================================== */}
-
-      {/* MODAL: ADD PRODUCT (Old Version) */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4 text-gray-800">
-              Add New Product
-            </h2>
-            <form onSubmit={handleAddProduct} className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">
-                  Product Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={newProduct.name}
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, name: e.target.value })
-                  }
-                  className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="e.g., S&R Beef Belly 1kg"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">
-                  Image URL
-                </label>
-                <input
-                  type="text"
-                  value={newProduct.image_url}
-                  onChange={(e) =>
-                    setNewProduct({ ...newProduct, image_url: e.target.value })
-                  }
-                  className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-4"
-                  placeholder="Paste image link here (e.g., https://...)"
-                />
-              </div>
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <label className="block text-sm font-bold text-gray-700 mb-1">
-                    Price (₱)
-                  </label>
-                  <input
-                    type="number"
-                    required
-                    value={newProduct.price}
-                    onChange={(e) =>
-                      setNewProduct({ ...newProduct, price: e.target.value })
-                    }
-                    className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
-                    placeholder="0.00"
-                  />
-                </div>
-                {/* 👇 UPGRADED: MULTI-SELECT CHECKBOX GRID 👇 */}
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Categories & Tags (Select all that apply)
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 bg-gray-50 p-4 rounded-xl border border-gray-200">
-                    {MASTER_CATEGORIES.map((cat) => (
-                      <label
-                        key={cat.id}
-                        className={`flex items-center space-x-3 p-3 rounded-lg border cursor-pointer transition-all ${
-                          (productForm.tags || []).includes(cat.name)
-                            ? "bg-blue-50 border-blue-300 shadow-sm"
-                            : "bg-white border-gray-200 hover:bg-gray-50 hover:border-blue-200"
-                        }`}
-                      >
-                        <input
-                          type="checkbox"
-                          className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300 cursor-pointer"
-                          checked={(productForm.tags || []).includes(cat.name)}
-                          onChange={() => handleTagToggle(cat.name)}
-                        />
-                        <span className="text-sm font-bold text-gray-700">
-                          {cat.name}
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2 rounded-lg font-bold text-gray-600 hover:bg-gray-100 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 rounded-lg font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors shadow-md"
-                >
-                  Save Product
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* MODAL: IMAGE LIGHTBOX PREVIEW */}
       {selectedImage && (

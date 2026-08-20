@@ -44,6 +44,13 @@ export async function GET() {
       console.log("Tags column likely already exists. Skipping alteration.");
     }
 
+    // 4. 👇 NEW: Add Brand/Supplier Tracking Column 👇
+    try {
+      await pool.query(`ALTER TABLE products ADD COLUMN brand VARCHAR(255) DEFAULT 'S&R / Unbranded'`);
+      console.log("Successfully added 'brand' column to products table.");
+    } catch (brandError) {
+      console.log("Brand column likely already exists. Skipping alteration.");
+    }
 
 
     return NextResponse.json({ message: "Tables created successfully!" }, { status: 200 });

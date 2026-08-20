@@ -10,10 +10,11 @@ export async function POST(request) {
     // Convert tags array to JSON string safely
     const tagsJson = data.tags ? JSON.stringify(data.tags) : JSON.stringify([]);
 
-    // Hardcode category_id as 1 to satisfy MySQL's NOT NULL rule
+    // 👇 NEW (Step 2.1): Added 'brand' to the INSERT command and 'data.brand' to the values array.
+    // We use a fallback of 'S&R / Unbranded' just in case the field is left empty.
     const [result] = await pool.query(
-      `INSERT INTO products (name, price, category_id, description, image_url, tags) VALUES (?, ?, ?, ?, ?, ?)`,
-      [data.name, data.price, 1, data.description || '', data.image_url || '', tagsJson]
+      `INSERT INTO products (name, price, category_id, description, image_url, tags, brand) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [data.name, data.price, 1, data.description || '', data.image_url || '', tagsJson, data.brand || 'S&R / Unbranded']
     );
 
     return NextResponse.json({ success: true, id: result.insertId }, { status: 200 });
@@ -31,10 +32,11 @@ export async function PUT(request) {
     // Convert tags array to JSON string safely
     const tagsJson = data.tags ? JSON.stringify(data.tags) : JSON.stringify([]);
 
-    // Removed "category_id = ?" from the SET command to bypass the NULL error
+    // 👇 NEW (Step 2.2): Added 'brand = ?' to the SET command. 
+    // We also added 'data.brand' to the values array RIGHT BEFORE 'data.id'.
     await pool.query(
-      `UPDATE products SET name = ?, price = ?, description = ?, image_url = ?, tags = ? WHERE id = ?`,
-      [data.name, data.price, data.description || '', data.image_url || '', tagsJson, data.id]
+      `UPDATE products SET name = ?, price = ?, description = ?, image_url = ?, tags = ?, brand = ? WHERE id = ?`,
+      [data.name, data.price, data.description || '', data.image_url || '', tagsJson, data.brand || 'S&R / Unbranded', data.id]
     );
 
     return NextResponse.json({ success: true, message: 'Product updated successfully' }, { status: 200 });
