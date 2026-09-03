@@ -892,12 +892,23 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                             📍 {order.customer_address}
                           </p>
                         </div>
-                        <button
-                          onClick={() => updateOrderStatus(order.id, "Preparing")}
-                          className="mt-2 w-full bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold py-2 rounded-lg text-xs transition-colors shadow-sm"
-                        >
-                          Start Preparing 🍳
-                        </button>
+                        {/* Upgraded Lane 1 Button */}
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => {
+                              updateOrderStatus(order.id, "Preparing");
+                              window.open(
+                                `https://wa.me/63${order.customer_phone.replace(/^0+/, "")}?text=${encodeURIComponent(
+                                  `Hi ${order.customer_name}! Great news from ZT Trading. We have received your order (#${order.id}) and we are now PREPARING it! 🍳 We will message you again once it is on the way.`
+                                )}`,
+                                "_blank"
+                              );
+                            }}
+                            className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold py-2 rounded-lg text-xs transition-colors shadow-sm"
+                          >
+                            Start Preparing & Notify 🍳
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -920,12 +931,23 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                           <p className="text-sm font-bold text-gray-800">{order.customer_name}</p>
                           <p className="text-xs text-gray-500">📍 {order.delivery_area}</p>
                         </div>
-                        <button
-                          onClick={() => updateOrderStatus(order.id, "Out for Delivery")}
-                          className="mt-2 w-full bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 font-bold py-2 rounded-lg text-xs transition-colors shadow-sm"
-                        >
-                          Send to Delivery 🛵
-                        </button>
+                        {/* Upgraded Lane 2 Button */}
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => {
+                              updateOrderStatus(order.id, "Out for Delivery");
+                              window.open(
+                                `https://wa.me/63${order.customer_phone.replace(/^0+/, "")}?text=${encodeURIComponent(
+                                  `Hi ${order.customer_name}! Your ZT Trading order (#${order.id}) is now OUT FOR DELIVERY! 🛵💨 Please prepare the exact amount of ₱${order.grand_total}. Our rider will be there soon!`
+                                )}`,
+                                "_blank"
+                              );
+                            }}
+                            className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 font-bold py-2 rounded-lg text-xs transition-colors shadow-sm"
+                          >
+                            Send Delivery & Notify 🛵
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -949,12 +971,23 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                           <p className="text-xs text-gray-500">📞 {order.customer_phone}</p>
                         </div>
                         <div className="flex gap-2 mt-2">
+                          {/* Upgraded Lane 3 Button */}
+                        <div className="flex gap-2 mt-2">
                           <button
-                            onClick={() => updateOrderStatus(order.id, "Completed")}
+                            onClick={() => {
+                              updateOrderStatus(order.id, "Completed");
+                              window.open(
+                                `https://wa.me/63${order.customer_phone.replace(/^0+/, "")}?text=${encodeURIComponent(
+                                  `Hi ${order.customer_name}! Your order (#${order.id}) is now COMPLETED. ✅ Thank you so much for choosing ZT Trading! We hope you enjoy it and we look forward to serving you again.`
+                                )}`,
+                                "_blank"
+                              );
+                            }}
                             className="flex-1 bg-gray-900 hover:bg-black text-white font-bold py-2 rounded-lg text-xs transition-colors shadow-sm"
                           >
-                            Complete ✅
+                            Complete & Thank You ✅
                           </button>
+                        </div>
                         </div>
                       </div>
                     ))}
