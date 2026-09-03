@@ -357,6 +357,10 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       return order.status === "Completed" || order.status === "Cancelled";
     }
   });
+  // Kanban Board Derived States
+  const newOrders = orders.filter((order) => order.status === "Pending");
+  const preparingOrders = orders.filter((order) => order.status === "Preparing");
+  const deliveryOrders = orders.filter((order) => order.status === "Out for Delivery");
 
   // ==========================================
   // 8. FILTERED PRODUCTS
@@ -864,104 +868,203 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
               </div>
             </div>
 
-            <div className="w-full max-w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto block">
-              <table className="w-full min-w-full text-left border-collapse whitespace-nowrap">
-                <thead>
-                  <tr className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider border-b border-gray-200">
-                    <th className="p-4 font-semibold w-16">ID</th>
-                    <th className="p-4 font-semibold">Customer Details</th>
-                    <th className="p-4 font-semibold">Delivery Area</th>
-                    <th className="p-4 font-semibold">Grand Total</th>
-                    <th className="p-4 font-semibold text-center">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {displayedOrders.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan="5"
-                        className="p-8 text-center text-gray-500 font-medium"
-                      >
-                        {orderView === "active"
-                          ? "You're all caught up! No active orders right now."
-                          : "No completed orders yet."}
-                      </td>
-                    </tr>
-                  ) : (
-                    displayedOrders.map((order) => (
-                      <tr
-                        key={order.id}
-                        className="hover:bg-blue-50/50 transition-colors"
-                      >
-                        <td className="p-4 font-black text-gray-900">
-                          #{order.id}
-                        </td>
-                        <td className="p-4">
-                          <p className="font-bold text-sm text-gray-900">
-                            {order.customer_name}
+            {/* 👇 KANBAN BOARD (Shows only if Active) 👇 */}
+            {orderView === "active" && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
+                
+                {/* Lane 1: New Orders */}
+                <div className="bg-gray-200/50 rounded-xl p-4 min-h-[500px]">
+                  <h3 className="font-bold text-gray-700 mb-4 uppercase text-sm tracking-wider flex justify-between">
+                    <span>🚨 New</span>
+                    <span className="bg-white px-2 py-0.5 rounded-full text-xs">{newOrders.length}</span>
+                  </h3>
+                  <div className="mt-4 space-y-3 overflow-y-auto max-h-[600px] pr-1">
+                    {newOrders.map((order) => (
+                      <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start">
+                          <span className="font-black text-gray-900">#{order.id}</span>
+                          <span className="font-bold text-green-600">₱{order.grand_total}</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-800">{order.customer_name}</p>
+                          <p className="text-xs text-gray-500">📞 {order.customer_phone}</p>
+                          <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+                            📍 {order.customer_address}
                           </p>
-                          <p className="text-xs text-gray-600 mt-0.5">
-                            📞 {order.customer_phone}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
-                            {order.customer_address}
-                          </p>
-                        </td>
-                        <td className="p-4">
-                          <p className="text-sm font-medium text-gray-800 line-clamp-1">
-                            {order.delivery_area}
-                          </p>
-                          <p className="text-xs text-gray-500 font-bold mt-0.5">
-                            Fee: ₱{order.delivery_fee}
-                          </p>
-                        </td>
-                        <td className="p-4 font-black text-lg text-green-600">
-                          ₱{order.grand_total}
-                        </td>
-                        <td className="p-4 text-center">
-                          <div className="flex flex-col items-center gap-2">
-                            <select
-                              value={order.status}
-                              onChange={(e) =>
-                                updateOrderStatus(order.id, e.target.value)
-                              }
-                              className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider outline-none cursor-pointer border-2 transition-colors text-center w-32 appearance-none
-                                  ${
-                                    order.status === "Pending"
-                                      ? "bg-yellow-50 text-yellow-700 border-yellow-300 hover:bg-yellow-100"
-                                      : order.status === "Completed"
-                                        ? "bg-green-50 text-green-700 border-green-300 hover:bg-green-100"
-                                        : "bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100"
-                                  }
-                                `}
-                            >
-                              <option value="Pending">Pending</option>
-                              <option value="Out for Delivery">
-                                Out for Delivery
-                              </option>
-                              <option value="Completed">Completed</option>
-                              <option value="Cancelled">Cancelled</option>
-                            </select>
+                        </div>
+                        <button
+                          onClick={() => updateOrderStatus(order.id, "Preparing")}
+                          className="mt-2 w-full bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold py-2 rounded-lg text-xs transition-colors shadow-sm"
+                        >
+                          Start Preparing 🍳
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
 
-                            <a
-                              href={`https://wa.me/63${order.customer_phone.replace(/^0+/, "")}?text=${encodeURIComponent(
-                                `Hi ${order.customer_name}! This is ZT Trading. Just an update regarding your order (#${order.id}): The status is now [${order.status}]. 🛵💨`,
-                              )}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[10px] font-bold text-gray-500 hover:text-green-600 flex items-center gap-1 transition-colors bg-gray-100 hover:bg-green-50 px-3 py-1 rounded-full border border-gray-200"
-                              title="Send WhatsApp Update"
-                            >
-                              <span className="text-sm">💬</span> Notify
-                            </a>
-                          </div>
+                {/* Lane 2: Preparing */}
+                <div className="bg-blue-50/50 rounded-xl p-4 min-h-[500px]">
+                  <h3 className="font-bold text-blue-700 mb-4 uppercase text-sm tracking-wider flex justify-between">
+                    <span>🍳 Preparing</span>
+                    <span className="bg-white px-2 py-0.5 rounded-full text-xs">{preparingOrders.length}</span>
+                  </h3>
+                   <div className="mt-4 space-y-3 overflow-y-auto max-h-[600px] pr-1">
+                    {preparingOrders.map((order) => (
+                      <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start">
+                          <span className="font-black text-gray-900">#{order.id}</span>
+                          <span className="font-bold text-green-600">₱{order.grand_total}</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-800">{order.customer_name}</p>
+                          <p className="text-xs text-gray-500">📍 {order.delivery_area}</p>
+                        </div>
+                        <button
+                          onClick={() => updateOrderStatus(order.id, "Out for Delivery")}
+                          className="mt-2 w-full bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 font-bold py-2 rounded-lg text-xs transition-colors shadow-sm"
+                        >
+                          Send to Delivery 🛵
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Lane 3: Out for Delivery */}
+                <div className="bg-green-50/50 rounded-xl p-4 min-h-[500px]">
+                  <h3 className="font-bold text-green-700 mb-4 uppercase text-sm tracking-wider flex justify-between">
+                    <span>🛵 Delivery</span>
+                    <span className="bg-white px-2 py-0.5 rounded-full text-xs">{deliveryOrders.length}</span>
+                  </h3>
+                   <div className="mt-4 space-y-3 overflow-y-auto max-h-[600px] pr-1">
+                    {deliveryOrders.map((order) => (
+                      <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:shadow-md transition-shadow">
+                        <div className="flex justify-between items-start">
+                          <span className="font-black text-gray-900">#{order.id}</span>
+                          <span className="font-bold text-green-600">₱{order.grand_total}</span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-gray-800">{order.customer_name}</p>
+                          <p className="text-xs text-gray-500">📞 {order.customer_phone}</p>
+                        </div>
+                        <div className="flex gap-2 mt-2">
+                          <button
+                            onClick={() => updateOrderStatus(order.id, "Completed")}
+                            className="flex-1 bg-gray-900 hover:bg-black text-white font-bold py-2 rounded-lg text-xs transition-colors shadow-sm"
+                          >
+                            Complete ✅
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+            {/* 👇 ORIGINAL TABLE (Shows only if History) 👇 */}
+            {orderView === "history" && (
+              <div className="w-full max-w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto block animate-fade-in">
+                <table className="w-full min-w-full text-left border-collapse whitespace-nowrap">
+                  <thead>
+                    <tr className="bg-gray-50 text-gray-500 uppercase text-xs tracking-wider border-b border-gray-200">
+                      <th className="p-4 font-semibold w-16">ID</th>
+                      <th className="p-4 font-semibold">Customer Details</th>
+                      <th className="p-4 font-semibold">Delivery Area</th>
+                      <th className="p-4 font-semibold">Grand Total</th>
+                      <th className="p-4 font-semibold text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {displayedOrders.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan="5"
+                          className="p-8 text-center text-gray-500 font-medium"
+                        >
+                          {orderView === "active"
+                            ? "You're all caught up! No active orders right now."
+                            : "No completed orders yet."}
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                    ) : (
+                      displayedOrders.map((order) => (
+                        <tr
+                          key={order.id}
+                          className="hover:bg-blue-50/50 transition-colors"
+                        >
+                          <td className="p-4 font-black text-gray-900">
+                            #{order.id}
+                          </td>
+                          <td className="p-4">
+                            <p className="font-bold text-sm text-gray-900">
+                              {order.customer_name}
+                            </p>
+                            <p className="text-xs text-gray-600 mt-0.5">
+                              📞 {order.customer_phone}
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+                              {order.customer_address}
+                            </p>
+                          </td>
+                          <td className="p-4">
+                            <p className="text-sm font-medium text-gray-800 line-clamp-1">
+                              {order.delivery_area}
+                            </p>
+                            <p className="text-xs text-gray-500 font-bold mt-0.5">
+                              Fee: ₱{order.delivery_fee}
+                            </p>
+                          </td>
+                          <td className="p-4 font-black text-lg text-green-600">
+                            ₱{order.grand_total}
+                          </td>
+                          <td className="p-4 text-center">
+                            <div className="flex flex-col items-center gap-2">
+                              <select
+                                value={order.status}
+                                onChange={(e) =>
+                                  updateOrderStatus(order.id, e.target.value)
+                                }
+                                className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider outline-none cursor-pointer border-2 transition-colors text-center w-32 appearance-none
+                                    ${
+                                      order.status === "Pending"
+                                        ? "bg-yellow-50 text-yellow-700 border-yellow-300 hover:bg-yellow-100"
+                                        : order.status === "Completed"
+                                          ? "bg-green-50 text-green-700 border-green-300 hover:bg-green-100"
+                                          : "bg-blue-50 text-blue-700 border-blue-300 hover:bg-blue-100"
+                                    }
+                                  `}
+                              >
+                                <option value="Pending">Pending</option>
+                                <option value="Out for Delivery">
+                                  Out for Delivery
+                                </option>
+                                <option value="Completed">Completed</option>
+                                <option value="Cancelled">Cancelled</option>
+                              </select>
+
+                              <a
+                                href={`https://wa.me/63${order.customer_phone.replace(/^0+/, "")}?text=${encodeURIComponent(
+                                  `Hi ${order.customer_name}! This is ZT Trading. Just an update regarding your order (#${order.id}): The status is now [${order.status}]. 🛵💨`,
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[10px] font-bold text-gray-500 hover:text-green-600 flex items-center gap-1 transition-colors bg-gray-100 hover:bg-green-50 px-3 py-1 rounded-full border border-gray-200"
+                                title="Send WhatsApp Update"
+                              >
+                                <span className="text-sm">💬</span> Notify
+                              </a>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
 
