@@ -6,6 +6,17 @@ import Image from "next/image";
 export default function ProductCard({ product }) {
   const addItem = useCart((state) => state.addItem);
 
+  // 1. Pull 'items' (fallback to []) and 'addItem' to match your store exactly!
+  const cart = useCart((state) => state.items) || [];
+  const addToCart = useCart((state) => state.addItem);
+
+  // 2. Pull our + and - functions
+  const increaseQuantity = useCart((state) => state.increaseQuantity);
+  const decreaseQuantity = useCart((state) => state.decreaseQuantity);
+
+  // 3. Check if THIS specific product is already in the cart
+  const cartItem = cart.find((item) => item.id === product.id);
+
   return (
     <div className="h-full bg-[#0a0a09] rounded-xl shadow-sm border border-[#c3afb7]/30 overflow-hidden flex flex-col transition-transform hover:scale-[1.02]">
       {/* Image Placeholder */}
@@ -52,14 +63,33 @@ export default function ProductCard({ product }) {
             ₱{Number(product.price).toFixed(2)}
           </span>
 
-          {/* Button: Vivid Olive (#acbf00) hovering to Vivid Yellow Green (#d6eb1d) with Dark Gray text (#0a0a09) */}
-          <button
-            onClick={() => addItem(product)}
-            className="w-full bg-[#acbf00] hover:bg-[#d6eb1d] text-[#0a0a09] py-2 px-2 rounded-lg font-semibold transition-colors text-sm flex items-center justify-center gap-1 active:scale-95"
-          >
-            <span>Add</span>
-            {/* <span className="hidden sm:inline">➕</span> */}
-          </button>
+          {/* 👇 GRABMART STYLE ADD/QUANTITY TOGGLE (GOLD HOVER) 👇 */}
+          {cartItem ? (
+            <div className="flex items-center justify-between bg-[#0a0a09] border border-[#c3afb7]/50 rounded-lg p-1 w-full mt-3 animate-fade-in">
+              <button
+                onClick={() => decreaseQuantity(product.id)}
+                className="w-8 h-8 flex items-center justify-center bg-transparent text-[#c3afb7] font-bold rounded shadow-sm hover:bg-[#D6EB1D] hover:text-[#0a0a09] transition-colors"
+              >
+                -
+              </button>
+              <span className="font-bold text-[#c3afb7] text-sm">
+                {cartItem.quantity}
+              </span>
+              <button
+                onClick={() => increaseQuantity(product.id)}
+                className="w-8 h-8 flex items-center justify-center bg-[#c3afb7] text-[#0a0a09] font-bold rounded shadow-sm hover:bg-[#D6EB1D] hover:text-[#0a0a09] transition-colors"
+              >
+                +
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => addToCart(product)}
+              className="w-full mt-3 bg-transparent border-2 border-[#c3afb7] text-[#c3afb7] hover:bg-[#D6EB1D] hover:border-[#D6EB1D] hover:text-[#0a0a09] font-bold py-2 rounded-lg transition-colors shadow-sm"
+            >
+              Add to Cart
+            </button>
+          )}
         </div>
       </div>
     </div>
