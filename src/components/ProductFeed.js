@@ -30,14 +30,21 @@ export default function ProductFeed({ allProducts }) {
     }
   };
 
-  // 3. Filter products ONLY by search query first
+ // 3. Filter products ONLY by search query first
   const searchFilteredProducts = allProducts.filter((product) => {
-    const searchLower = searchQuery.toLowerCase();
+    // 1. DEFINE VARIABLES FIRST
+    const query = searchQuery.toLowerCase(); 
     const safeDescription = product.description || "";
-    return (
-      product.name.toLowerCase().includes(searchLower) ||
-      safeDescription.toLowerCase().includes(searchLower)
-    );
+    const productBrand = product.brand || "S&R / Unbranded";
+
+    // 2. CHECK ALL FIELDS (Name, ID, Description, OR Brand)
+    const matchesSearch =
+      product.name.toLowerCase().includes(query) ||
+      product.id.toString().includes(query) ||
+      safeDescription.toLowerCase().includes(query) ||
+      productBrand.toLowerCase().includes(query);
+
+    return matchesSearch; 
   });
 
   // 4. UPGRADED: Group the filtered products by their new tags!

@@ -9,6 +9,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
 
   // --- NEW: Product Search State ---
   const [productSearchQuery, setProductSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
   const [pin, setPin] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -30,6 +31,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     tags: [],
     description: "",
     image_url: "",
+    brand: "",
   });
 
   // --- OLD: Modal States (Kept as requested) ---
@@ -217,6 +219,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       tags: [],
       description: "",
       image_url: "",
+      brand: "",
     });
     setIsAddingProduct(false);
     setEditingProductId(null);
@@ -365,20 +368,25 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
   // ==========================================
   // 8. FILTERED PRODUCTS
   // ==========================================
-  // Combine search (by name OR id) AND brand dropdown logic
   const filteredProducts = products.filter((product) => {
-    // 1. Check if the product matches the search bar text OR the product ID
-    const matchesSearch =
-      product.name.toLowerCase().includes(productSearchQuery.toLowerCase()) ||
-      product.id.toString().includes(productSearchQuery);
-
-    // 2. Check if the product matches the selected brand dropdown
+    // 1. DEFINE VARIABLES FIRST
+    const query = productSearchQuery.toLowerCase();
     const productBrand = product.brand || "S&R / Unbranded";
+
+    // 2. USE THEM AFTER
+    const matchesSearch =
+      product.name.toLowerCase().includes(query) ||
+      product.id.toString().includes(query) ||
+      productBrand.toLowerCase().includes(query);
+
+    // 3. CHECK BRAND DROPDOWN
     const matchesBrand = filterBrand === "All" || productBrand === filterBrand;
 
-    // 3. Keep the product only if it matches BOTH conditions
+    // 4. RETURN MATCH
     return matchesSearch && matchesBrand;
   });
+
+  
 
   // 👇 Your existing `return (` starts right here 👇
 
