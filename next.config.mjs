@@ -4,7 +4,11 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**', // This wildcard allows images from ANY secure website (Great for your MVP!)
+        hostname: '**.fbcdn.net',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.snrshopping.com',
       },
     ],
   },

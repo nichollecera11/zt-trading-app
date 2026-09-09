@@ -732,7 +732,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                         {/* IMAGE THUMBNAIL */}
                         <td className="p-4 text-center">
                           {product.image_url ? (
-                            <Image
+                            <img
                               src={product.image_url}
                               alt={product.name}
                               width={48}

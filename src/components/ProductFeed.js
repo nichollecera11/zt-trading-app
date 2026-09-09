@@ -18,6 +18,7 @@ export default function ProductFeed({ allProducts }) {
     "🥩 Meats, Seafood & Deli",
     "🥬 Fresh Produce",
     "🏍️ Custom Pabili / Others"
+    
   ];
 
   // 👇 2. NEW: Safely extract the new JSON tags array from the database 👇

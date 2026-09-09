@@ -51,6 +51,14 @@ export async function GET() {
     } catch (brandError) {
       console.log("Brand column likely already exists. Skipping alteration.");
     }
+    // 5. 👇 NEW: Upgrade image column to TEXT for Facebook URLs 👇
+    try {
+      // NOTE: If your database uses 'image_url' instead of 'image', change the word below!
+      await pool.query(`ALTER TABLE products MODIFY COLUMN image_url TEXT`);
+      console.log("Successfully changed 'image_url' column to TEXT.");
+    } catch (imageError) {
+      console.log("Image column modification skipped or failed:", imageError.message);
+    }
 
 
     return NextResponse.json({ message: "Tables created successfully!" }, { status: 200 });

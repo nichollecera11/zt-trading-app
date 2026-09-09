@@ -1,7 +1,7 @@
 "use client";
 
 import { useCart } from "../store/useCart";
-import Image from "next/image";
+
 
 export default function ProductCard({ product }) {
   const addItem = useCart((state) => state.addItem);
@@ -23,7 +23,7 @@ export default function ProductCard({ product }) {
       {/* Changed background and dashed border to use the muted palette with opacity */}
       <div className="h-48 bg-[#c3afb7]/10 w-full flex items-center justify-center text-[#c3afb7] overflow-hidden relative flex-shrink-0">
         {product.image_url ? (
-          <Image
+          <img
             src={product.image_url}
             alt={product.name}
             width={400}
