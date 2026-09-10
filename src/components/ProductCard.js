@@ -26,6 +26,7 @@ export default function ProductCard({ product }) {
           <img
             src={product.image_url}
             alt={product.name}
+            loading="lazy"
             width={400}
             height={400}
             className="w-full h-48 object-cover rounded-t-xl"
