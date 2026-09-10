@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import Image from "next/image";
+import toast, { Toaster } from "react-hot-toast";
 
 export default function AdminDashboard({ allProducts, allOrders = [] }) {
   // ==========================================
@@ -9,7 +9,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
 
   // --- NEW: Product Search State ---
   const [productSearchQuery, setProductSearchQuery] = useState("");
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [pin, setPin] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -23,6 +23,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
   const [filterBrand, setFilterBrand] = useState("All");
 
   // --- NEW: Product Manager States (Sliding Form) ---
+  const [isSaving, setIsSaving] = useState(false);
   const [isAddingProduct, setIsAddingProduct] = useState(false);
   const [editingProductId, setEditingProductId] = useState(null);
   const [productForm, setProductForm] = useState({
@@ -125,11 +126,11 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       if (res.ok) {
         setIsAuthenticated(true);
       } else {
-        alert("🚨 Incorrect PIN! Access Denied.");
+        toast.error("Incorrect PIN! Access Denied.");
         setPin("");
       }
     } catch (error) {
-      alert("Something went wrong checking the PIN.");
+      toast.error("Something went wrong checking the PIN.");
     }
   };
 
@@ -153,7 +154,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       });
     } catch (error) {
       console.error("Failed to update status", error);
-      alert("Uh oh! Failed to save the status to the database.");
+      toast.error("Uh oh! Failed to save the status to the database.");
     }
   };
 
@@ -164,8 +165,21 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     if (!window.confirm("Are you sure you want to delete this product?"))
       return;
 
+    // Keep a snapshot so we can roll back if the delete fails on the server
+    const previousProducts = products;
     setProducts(products.filter((p) => p.id !== id));
-    await fetch(`/api/products?id=${id}`, { method: "DELETE" });
+
+    try {
+      const res = await fetch(`/api/products?id=${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        setProducts(previousProducts);
+        toast.error("Failed to delete the product.");
+      }
+    } catch (error) {
+      console.error("Delete Error:", error);
+      setProducts(previousProducts);
+      toast.error("🚨 Something went wrong communicating with the server!");
+    }
   };
 
   // 👇 ADD THIS: Handles checkbox clicks 👇
@@ -186,43 +200,74 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
 
   const handleSaveProduct = async (e) => {
     e.preventDefault();
+    setIsSaving(true);
 
-    if (editingProductId) {
-      // 🛠 EDIT EXISTING PRODUCT
-      const updatedProduct = { ...productForm, id: editingProductId };
-      setProducts(
-        products.map((p) => (p.id === editingProductId ? updatedProduct : p)),
-      );
+    try {
+      if (editingProductId) {
+        // 🛠 EDIT EXISTING PRODUCT
+        const updatedProduct = { ...productForm, id: editingProductId };
 
-      await fetch("/api/products", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedProduct),
-      });
-    } else {
-      // 🟢 ADD NEW PRODUCT
-      const res = await fetch("/api/products", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(productForm),
-      });
-      const data = await res.json();
+        const res = await fetch("/api/products", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updatedProduct),
+        });
 
-      if (data.success) {
-        setProducts([...products, { ...productForm, id: data.id }]);
+        if (res.ok) {
+          setProducts(
+            products.map((p) =>
+              p.id === editingProductId ? updatedProduct : p,
+            ),
+          );
+          // 🎉 SUCCESS TOAST
+          toast.success("Product updated successfully!");
+        } else {
+          // 🚨 ERROR TOAST & STOP
+          toast.error("Failed to update the product.");
+          return; // This stops the code here so the modal stays open!
+        }
+      } else {
+        // 🟢 ADD NEW PRODUCT
+        const res = await fetch("/api/products", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(productForm),
+        });
+
+        if (res.ok) {
+          // 👇 We only extract the JSON ONCE right here! 👇
+          const data = await res.json();
+
+          setProducts([
+            ...products,
+            { ...productForm, id: data.id || data.insertId },
+          ]);
+          toast.success("New product added successfully! 📦");
+        } else {
+          toast.error("Failed to save the new product.");
+          return; // Stops modal from closing
+        }
       }
-    }
 
-    setProductForm({
-      name: "",
-      price: "",
-      tags: [],
-      description: "",
-      image_url: "",
-      brand: "",
-    });
-    setIsAddingProduct(false);
-    setEditingProductId(null);
+      // ==========================================
+      // 👇 ONLY RUNS IF SAVE WAS SUCCESSFUL 👇
+      // ==========================================
+      setProductForm({
+        name: "",
+        price: "",
+        tags: [],
+        description: "",
+        image_url: "",
+        brand: "",
+      });
+      setIsAddingProduct(false);
+      setEditingProductId(null);
+    } catch (error) {
+      console.error("Save Error:", error);
+      toast.error("🚨 Something went wrong communicating with the server!");
+    } finally {
+      setIsSaving(false); // 👈 TURN SPINNER OFF (Happens even if there's an error!)
+    }
   };
 
   // ==========================================
@@ -283,10 +328,10 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
         );
         setEditingProduct(null);
       } else {
-        alert("Something went wrong trying to edit the product.");
+        toast.error("Something went wrong trying to edit the product.");
       }
     } catch (error) {
-      console.error("Error updating product:", error);
+      toast.error(`Error updating product: ${error?.message || error}`);
     }
   };
 
@@ -305,7 +350,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       if (response.ok) {
         setProducts(products.filter((product) => product.id !== productId));
       } else {
-        alert("Something went wrong trying to delete.");
+        toast.error("Something went wrong trying to delete.");
       }
     } catch (error) {
       console.error("Error:", error);
@@ -318,6 +363,8 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        {/* 👇 Add the Toaster here so alerts show up on the login screen 👇 */}
+        <Toaster position="top-center" reverseOrder={false} />
         <div className="bg-white p-8 rounded-2xl shadow-lg max-w-sm w-full border border-gray-100 text-center">
           <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
             🔒
@@ -362,8 +409,12 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
   });
   // Kanban Board Derived States
   const newOrders = orders.filter((order) => order.status === "Pending");
-  const preparingOrders = orders.filter((order) => order.status === "Preparing");
-  const deliveryOrders = orders.filter((order) => order.status === "Out for Delivery");
+  const preparingOrders = orders.filter(
+    (order) => order.status === "Preparing",
+  );
+  const deliveryOrders = orders.filter(
+    (order) => order.status === "Out for Delivery",
+  );
 
   // ==========================================
   // 8. FILTERED PRODUCTS
@@ -386,12 +437,13 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
     return matchesSearch && matchesBrand;
   });
 
-  
-
   // 👇 Your existing `return (` starts right here 👇
 
   return (
     <div className="flex h-screen bg-gray-100">
+      {/* 👇 Toaster mounted here too, so toasts actually render once logged in 👇 */}
+      <Toaster position="top-center" reverseOrder={false} />
+
       {/* ========================================== */}
       {/* 1. SIDEBAR NAVIGATION                        */}
       {/* ========================================== */}
@@ -509,6 +561,8 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                       price: "",
                       tags: [],
                       description: "",
+                      image_url: "",
+                      brand: "",
                     });
                     setEditingProductId(null);
                     setIsAddingProduct(true);
@@ -691,9 +745,43 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                       </button>
                       <button
                         type="submit"
-                        className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg transition-colors shadow-md"
+                        disabled={isSaving}
+                        className={`font-bold py-3 px-8 rounded-lg transition-all shadow-md flex items-center justify-center ${
+                          isSaving
+                            ? "bg-green-400 cursor-not-allowed text-white"
+                            : "bg-green-600 hover:bg-green-700 text-white"
+                        }`}
                       >
-                        {editingProductId ? "Save Changes" : "Save Product"}
+                        {isSaving ? (
+                          <span className="flex items-center gap-2">
+                            {/* 🌀 The Spinning SVG Icon */}
+                            <svg
+                              className="animate-spin h-5 w-5 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            Saving...
+                          </span>
+                        ) : editingProductId ? (
+                          "Save Changes"
+                        ) : (
+                          "Save Product"
+                        )}
                       </button>
                     </div>
                   </form>
@@ -798,7 +886,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                           </div>
                         </td>
                         <td className="p-4 font-black text-lg text-green-600">
-                          ₱{parseFloat(product.price).toFixed(2)}
+                          ₱{parseFloat(product.price || 0).toFixed(2)}
                         </td>
 
                         {/* Action Buttons (Edit / Delete) */}
@@ -806,15 +894,25 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                           <div className="flex justify-end gap-2">
                             <button
                               onClick={() => {
+                                // Safely parse tags so a malformed value in the DB
+                                // can't crash the edit modal when clicked.
+                                let parsedTags = [];
+                                try {
+                                  parsedTags =
+                                    typeof product.tags === "string"
+                                      ? JSON.parse(product.tags)
+                                      : product.tags || [];
+                                } catch (e) {
+                                  parsedTags = [];
+                                }
+
                                 setProductForm({
                                   name: product.name,
                                   price: product.price,
-                                  tags:
-                                    typeof product.tags === "string"
-                                      ? JSON.parse(product.tags)
-                                      : product.tags || [], // 👈 CHANGED THIS
+                                  tags: parsedTags,
                                   description: product.description || "",
                                   image_url: product.image_url || "",
+                                  brand: product.brand || "",
                                 });
                                 setEditingProductId(product.id);
                                 setIsAddingProduct(true);
@@ -879,23 +977,35 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
             {/* 👇 KANBAN BOARD (Shows only if Active) 👇 */}
             {orderView === "active" && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
-                
                 {/* Lane 1: New Orders */}
                 <div className="bg-gray-200/50 rounded-xl p-4 min-h-[500px]">
                   <h3 className="font-bold text-gray-700 mb-4 uppercase text-sm tracking-wider flex justify-between">
                     <span>🚨 New</span>
-                    <span className="bg-white px-2 py-0.5 rounded-full text-xs">{newOrders.length}</span>
+                    <span className="bg-white px-2 py-0.5 rounded-full text-xs">
+                      {newOrders.length}
+                    </span>
                   </h3>
                   <div className="mt-4 space-y-3 overflow-y-auto max-h-[600px] pr-1">
                     {newOrders.map((order) => (
-                      <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:shadow-md transition-shadow">
+                      <div
+                        key={order.id}
+                        className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:shadow-md transition-shadow"
+                      >
                         <div className="flex justify-between items-start">
-                          <span className="font-black text-gray-900">#{order.id}</span>
-                          <span className="font-bold text-green-600">₱{order.grand_total}</span>
+                          <span className="font-black text-gray-900">
+                            #{order.id}
+                          </span>
+                          <span className="font-bold text-green-600">
+                            ₱{order.grand_total}
+                          </span>
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-gray-800">{order.customer_name}</p>
-                          <p className="text-xs text-gray-500">📞 {order.customer_phone}</p>
+                          <p className="text-sm font-bold text-gray-800">
+                            {order.customer_name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            📞 {order.customer_phone}
+                          </p>
                           <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
                             📍 {order.customer_address}
                           </p>
@@ -906,10 +1016,10 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                             onClick={() => {
                               updateOrderStatus(order.id, "Preparing");
                               window.open(
-                                `https://wa.me/63${order.customer_phone.replace(/^0+/, "")}?text=${encodeURIComponent(
-                                  `Hi ${order.customer_name}! Great news from ZT Trading. We have received your order (#${order.id}) and we are now PREPARING it! 🍳 We will message you again once it is on the way.`
+                                `https://wa.me/63${(order.customer_phone || "").replace(/^0+/, "")}?text=${encodeURIComponent(
+                                  `Hi ${order.customer_name}! Great news from ZT Trading. We have received your order (#${order.id}) and we are now PREPARING it! 🍳 We will message you again once it is on the way.`,
                                 )}`,
-                                "_blank"
+                                "_blank",
                               );
                             }}
                             className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold py-2 rounded-lg text-xs transition-colors shadow-sm"
@@ -926,18 +1036,31 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                 <div className="bg-blue-50/50 rounded-xl p-4 min-h-[500px]">
                   <h3 className="font-bold text-blue-700 mb-4 uppercase text-sm tracking-wider flex justify-between">
                     <span>🍳 Preparing</span>
-                    <span className="bg-white px-2 py-0.5 rounded-full text-xs">{preparingOrders.length}</span>
+                    <span className="bg-white px-2 py-0.5 rounded-full text-xs">
+                      {preparingOrders.length}
+                    </span>
                   </h3>
-                   <div className="mt-4 space-y-3 overflow-y-auto max-h-[600px] pr-1">
+                  <div className="mt-4 space-y-3 overflow-y-auto max-h-[600px] pr-1">
                     {preparingOrders.map((order) => (
-                      <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:shadow-md transition-shadow">
+                      <div
+                        key={order.id}
+                        className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:shadow-md transition-shadow"
+                      >
                         <div className="flex justify-between items-start">
-                          <span className="font-black text-gray-900">#{order.id}</span>
-                          <span className="font-bold text-green-600">₱{order.grand_total}</span>
+                          <span className="font-black text-gray-900">
+                            #{order.id}
+                          </span>
+                          <span className="font-bold text-green-600">
+                            ₱{order.grand_total}
+                          </span>
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-gray-800">{order.customer_name}</p>
-                          <p className="text-xs text-gray-500">📍 {order.delivery_area}</p>
+                          <p className="text-sm font-bold text-gray-800">
+                            {order.customer_name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            📍 {order.delivery_area}
+                          </p>
                         </div>
                         {/* Upgraded Lane 2 Button */}
                         <div className="flex gap-2 mt-2">
@@ -945,10 +1068,10 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                             onClick={() => {
                               updateOrderStatus(order.id, "Out for Delivery");
                               window.open(
-                                `https://wa.me/63${order.customer_phone.replace(/^0+/, "")}?text=${encodeURIComponent(
-                                  `Hi ${order.customer_name}! Your ZT Trading order (#${order.id}) is now OUT FOR DELIVERY! 🛵💨 Please prepare the exact amount of ₱${order.grand_total}. Our rider will be there soon!`
+                                `https://wa.me/63${(order.customer_phone || "").replace(/^0+/, "")}?text=${encodeURIComponent(
+                                  `Hi ${order.customer_name}! Your ZT Trading order (#${order.id}) is now OUT FOR DELIVERY! 🛵💨 Please prepare the exact amount of ₱${order.grand_total}. Our rider will be there soon!`,
                                 )}`,
-                                "_blank"
+                                "_blank",
                               );
                             }}
                             className="flex-1 bg-green-50 hover:bg-green-100 text-green-700 border border-green-200 font-bold py-2 rounded-lg text-xs transition-colors shadow-sm"
@@ -965,43 +1088,55 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                 <div className="bg-green-50/50 rounded-xl p-4 min-h-[500px]">
                   <h3 className="font-bold text-green-700 mb-4 uppercase text-sm tracking-wider flex justify-between">
                     <span>🛵 Delivery</span>
-                    <span className="bg-white px-2 py-0.5 rounded-full text-xs">{deliveryOrders.length}</span>
+                    <span className="bg-white px-2 py-0.5 rounded-full text-xs">
+                      {deliveryOrders.length}
+                    </span>
                   </h3>
-                   <div className="mt-4 space-y-3 overflow-y-auto max-h-[600px] pr-1">
+                  <div className="mt-4 space-y-3 overflow-y-auto max-h-[600px] pr-1">
                     {deliveryOrders.map((order) => (
-                      <div key={order.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:shadow-md transition-shadow">
+                      <div
+                        key={order.id}
+                        className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:shadow-md transition-shadow"
+                      >
                         <div className="flex justify-between items-start">
-                          <span className="font-black text-gray-900">#{order.id}</span>
-                          <span className="font-bold text-green-600">₱{order.grand_total}</span>
+                          <span className="font-black text-gray-900">
+                            #{order.id}
+                          </span>
+                          <span className="font-bold text-green-600">
+                            ₱{order.grand_total}
+                          </span>
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-gray-800">{order.customer_name}</p>
-                          <p className="text-xs text-gray-500">📞 {order.customer_phone}</p>
+                          <p className="text-sm font-bold text-gray-800">
+                            {order.customer_name}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            📞 {order.customer_phone}
+                          </p>
                         </div>
                         <div className="flex gap-2 mt-2">
                           {/* Upgraded Lane 3 Button */}
-                        <div className="flex gap-2 mt-2">
-                          <button
-                            onClick={() => {
-                              updateOrderStatus(order.id, "Completed");
-                              window.open(
-                                `https://wa.me/63${order.customer_phone.replace(/^0+/, "")}?text=${encodeURIComponent(
-                                  `Hi ${order.customer_name}! Your order (#${order.id}) is now COMPLETED. ✅ Thank you so much for choosing ZT Trading! We hope you enjoy it and we look forward to serving you again.`
-                                )}`,
-                                "_blank"
-                              );
-                            }}
-                            className="flex-1 bg-gray-900 hover:bg-black text-white font-bold py-2 rounded-lg text-xs transition-colors shadow-sm"
-                          >
-                            Complete & Thank You ✅
-                          </button>
-                        </div>
+                          <div className="flex gap-2 mt-2">
+                            <button
+                              onClick={() => {
+                                updateOrderStatus(order.id, "Completed");
+                                window.open(
+                                  `https://wa.me/63${(order.customer_phone || "").replace(/^0+/, "")}?text=${encodeURIComponent(
+                                    `Hi ${order.customer_name}! Your order (#${order.id}) is now COMPLETED. ✅ Thank you so much for choosing ZT Trading! We hope you enjoy it and we look forward to serving you again.`,
+                                  )}`,
+                                  "_blank",
+                                );
+                              }}
+                              className="flex-1 bg-gray-900 hover:bg-black text-white font-bold py-2 rounded-lg text-xs transition-colors shadow-sm"
+                            >
+                              Complete & Thank You ✅
+                            </button>
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
-
               </div>
             )}
 
@@ -1087,7 +1222,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                               </select>
 
                               <a
-                                href={`https://wa.me/63${order.customer_phone.replace(/^0+/, "")}?text=${encodeURIComponent(
+                                href={`https://wa.me/63${(order.customer_phone || "").replace(/^0+/, "")}?text=${encodeURIComponent(
                                   `Hi ${order.customer_name}! This is ZT Trading. Just an update regarding your order (#${order.id}): The status is now [${order.status}]. 🛵💨`,
                                 )}`}
                                 target="_blank"
