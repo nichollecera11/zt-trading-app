@@ -47,13 +47,18 @@ export default function Checkout() {
   useEffect(() => {
     const savedCustomer = localStorage.getItem("zt_customer_details");
     if (savedCustomer) {
-      const parsedData = JSON.parse(savedCustomer);
-      setFormData((prev) => ({
-        ...prev,
-        name: parsedData.name || "",
-        address: parsedData.address || "",
-        phone: parsedData.phone || "",
-      }));
+      try {
+        const parsedData = JSON.parse(savedCustomer);
+        setFormData((prev) => ({
+          ...prev,
+          name: parsedData.name || "",
+          address: parsedData.address || "",
+          phone: parsedData.phone || "",
+        }));
+      } catch (error) {
+        console.error("Failed to parse saved customer details:", error);
+        // Corrupted/old data shouldn't block checkout - just ignore it.
+      }
     }
   }, []);
 
@@ -115,8 +120,14 @@ export default function Checkout() {
           "_blank",
         );
       } else if (orderMethod === "sms") {
+        // iOS expects "&body=", Android expects "?body=" - using the wrong
+        // separator silently drops the message body on that platform.
+        const isIOS =
+          typeof navigator !== "undefined" &&
+          /iPad|iPhone|iPod/.test(navigator.userAgent);
+        const bodySeparator = isIOS ? "&" : "?";
         window.open(
-          `sms:+${YOUR_PHONE_NUMBER}?body=${encodedMessage}`,
+          `sms:+${YOUR_PHONE_NUMBER}${bodySeparator}body=${encodedMessage}`,
           "_self",
         );
       } else if (orderMethod === "copy") {
@@ -135,8 +146,22 @@ export default function Checkout() {
         }),
       );
 
-      clearCart();
-      window.location.href = "/";
+      // For "sms", we just navigated the current tab to an sms: link via
+      // window.open(..., "_self"). Clearing the cart and redirecting home
+      // right away can fire before the OS hands off to the Messages app,
+      // cancelling the handoff. A short delay gives it time to happen.
+      // WhatsApp ("_blank") and "copy" (blocked by alert()) don't have
+      // this problem, so they proceed immediately as before.
+      const finishUp = () => {
+        clearCart();
+        window.location.href = "/";
+      };
+
+      if (orderMethod === "sms") {
+        setTimeout(finishUp, 500);
+      } else {
+        finishUp();
+      }
     } catch (error) {
       console.error("Order Error:", error);
       alert(
