@@ -9,7 +9,8 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
 
   // --- NEW: Product Search State ---
   const [productSearchQuery, setProductSearchQuery] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const [pin, setPin] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -789,6 +790,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
               </div>
             )}
 
+
             {/* INVENTORY TABLE */}
             <div className="w-full max-w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto block">
               <table className="w-full min-w-full text-left border-collapse whitespace-nowrap">
@@ -977,59 +979,57 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
             {/* 👇 KANBAN BOARD (Shows only if Active) 👇 */}
             {orderView === "active" && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-fade-in">
-                {/* Lane 1: New Orders */}
-                <div className="bg-gray-200/50 rounded-xl p-4 min-h-[500px]">
-                  <h3 className="font-bold text-gray-700 mb-4 uppercase text-sm tracking-wider flex justify-between">
-                    <span>🚨 New</span>
-                    <span className="bg-white px-2 py-0.5 rounded-full text-xs">
-                      {newOrders.length}
-                    </span>
-                  </h3>
-                  <div className="mt-4 space-y-3 overflow-y-auto max-h-[600px] pr-1">
-                    {newOrders.map((order) => (
-                      <div
-                        key={order.id}
-                        className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:shadow-md transition-shadow"
-                      >
-                        <div className="flex justify-between items-start">
-                          <span className="font-black text-gray-900">
-                            #{order.id}
-                          </span>
-                          <span className="font-bold text-green-600">
-                            ₱{order.grand_total}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-gray-800">
-                            {order.customer_name}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            📞 {order.customer_phone}
-                          </p>
-                          <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
-                            📍 {order.customer_address}
-                          </p>
-                        </div>
-                        {/* Upgraded Lane 1 Button */}
-                        <div className="flex gap-2 mt-2">
-                          <button
-                            onClick={() => {
-                              updateOrderStatus(order.id, "Preparing");
-                              window.open(
-                                `https://wa.me/63${(order.customer_phone || "").replace(/^0+/, "")}?text=${encodeURIComponent(
-                                  `Hi ${order.customer_name}! Great news from ZT Trading. We have received your order (#${order.id}) and we are now PREPARING it! 🍳 We will message you again once it is on the way.`,
-                                )}`,
-                                "_blank",
-                              );
-                            }}
-                            className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold py-2 rounded-lg text-xs transition-colors shadow-sm"
-                          >
-                            Start Preparing & Notify 🍳
-                          </button>
-                        </div>
+                {/* Lane 1: Clickable New Orders */}
+                <div className="mt-4 space-y-3 overflow-y-auto max-h-[600px] pr-1">
+                  {newOrders.map((order) => (
+                    <div
+                      key={order.id}
+                      // 👇 1. ADDED THIS: Opens the modal when clicking the card
+                      onClick={() => setSelectedOrder(order)}
+                      // 👇 2. ADDED THIS: 'cursor-pointer' makes the mouse look like a clicking hand
+                      className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:shadow-md transition-shadow cursor-pointer hover:border-blue-300"
+                    >
+                      <div className="flex justify-between items-start">
+                        <span className="font-black text-gray-900">
+                          #{order.id}
+                        </span>
+                        <span className="font-bold text-green-600">
+                          ₱{order.grand_total}
+                        </span>
                       </div>
-                    ))}
-                  </div>
+                      <div>
+                        <p className="text-sm font-bold text-gray-800">
+                          {order.customer_name}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          📞 {order.customer_phone}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+                          📍 {order.customer_address}
+                        </p>
+                      </div>
+                      {/* Upgraded Lane 1 Button */}
+                      <div className="flex gap-2 mt-2">
+                        <button
+                          onClick={(e) => {
+                            // 👇 3. ADDED THIS: Stops the modal from opening when you click this specific button
+                            e.stopPropagation();
+
+                            updateOrderStatus(order.id, "Preparing");
+                            window.open(
+                              `https://wa.me/63${(order.customer_phone || "").replace(/^0+/, "")}?text=${encodeURIComponent(
+                                `Hi ${order.customer_name}! Great news from ZT Trading. We have received your order (#${order.id}) and we are now PREPARING it! 🍳 We will message you again once it is on the way.`,
+                              )}`,
+                              "_blank",
+                            );
+                          }}
+                          className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold py-2 rounded-lg text-xs transition-colors shadow-sm"
+                        >
+                          Start Preparing & Notify 🍳
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Lane 2: Preparing */}
@@ -1367,6 +1367,113 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       {/* ========================================== */}
       {/* 3. POP-UP MODALS (Global Overlays)           */}
       {/* ========================================== */}
+
+      {/* ========================================== */}
+      {/* 📦 ORDER DETAILS & PACKING CHECKLIST MODAL */}
+      {/* ========================================== */}
+      {selectedOrder && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative max-h-[90vh] flex flex-col animate-fade-in">
+            
+            {/* Header */}
+            <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
+              <div>
+                <h2 className="text-xl font-black text-gray-800">Order #{selectedOrder.id}</h2>
+                <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">
+                  {selectedOrder.status || "Active"}
+                </span>
+              </div>
+              <button 
+                onClick={() => setSelectedOrder(null)}
+                className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+              >
+                ❌
+              </button>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="p-5 overflow-y-auto">
+              
+              {/* Customer Details */}
+              <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-6">
+                <p className="font-bold text-gray-800 text-lg">{selectedOrder.customer_name}</p>
+                <p className="text-sm text-gray-600 mt-1">📞 {selectedOrder.customer_phone}</p>
+                <p className="text-sm text-gray-600 mt-1">📍 {selectedOrder.customer_address}</p>
+                
+                {/* Custom Pabili Notes (if any) */}
+                {selectedOrder.notes && (
+                  <p className="text-sm text-amber-700 bg-amber-50 p-3 rounded-lg mt-3 border border-amber-200 font-medium">
+                    📝 Note: {selectedOrder.notes}
+                  </p>
+                )}
+              </div>
+
+              {/* Packing Checklist */}
+              <h3 className="font-bold text-gray-800 mb-3 text-sm uppercase tracking-wider">
+                📦 Packing Checklist
+              </h3>
+              <div className="space-y-2">
+                {/* 
+                  ⚠️ DEFENSIVE PARSING: 
+                  MySQL usually stores arrays as strings. We safely parse it here.
+                  Change 'cart_items' to 'items' or 'cart' if your DB column is named differently!
+                */}
+                {(() => {
+                  let items = [];
+                  try {
+                    items = typeof selectedOrder.cart_items === 'string' 
+                      ? JSON.parse(selectedOrder.cart_items) 
+                      : selectedOrder.cart_items || [];
+                  } catch(e) { 
+                    items = []; 
+                  }
+
+                  if (items.length === 0) {
+                    return <p className="text-sm text-gray-500 italic">No cart items found.</p>;
+                  }
+
+                  return items.map((item, idx) => (
+                    <label 
+                      key={idx} 
+                      className="flex items-start gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-colors"
+                    >
+                      <input 
+                        type="checkbox" 
+                        className="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300 cursor-pointer" 
+                      />
+                      <div className="flex-1">
+                        <p className="font-bold text-gray-800 text-sm">{item.name}</p>
+                        <p className="text-xs text-gray-500 font-medium">
+                          Qty: {item.quantity} | ₱{item.price}
+                        </p>
+                      </div>
+                    </label>
+                  ));
+                })()}
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="p-5 border-t border-gray-100 flex gap-3 bg-gray-50 rounded-b-2xl">
+              <button 
+                onClick={() => setSelectedOrder(null)}
+                className="px-4 py-3 font-bold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 flex-1 transition-colors shadow-sm"
+              >
+                Close
+              </button>
+              <button 
+                onClick={() => {
+                   window.open(`https://wa.me/63${(selectedOrder.customer_phone || "").replace(/^0+/, "")}`, "_blank");
+                }}
+                className="px-4 py-3 font-bold text-white bg-[#25D366] hover:bg-[#1ebd5b] rounded-lg flex-1 transition-colors shadow-md flex items-center justify-center gap-2"
+              >
+                💬 WhatsApp
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
 
       {/* MODAL: IMAGE LIGHTBOX PREVIEW */}
       {selectedImage && (

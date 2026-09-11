@@ -10,9 +10,25 @@ export default async function Admin() {
   );
 
   // 2. Fetch ORDERS (Make sure this says 'FROM orders'!)
-  const [ordersData] = await pool.query(
-    `SELECT * FROM orders ORDER BY created_at DESC`
-  );
+  // 2. Fetch ORDERS (Upgraded to include cart_items!)
+  const [ordersData] = await pool.query(`
+    SELECT 
+      o.*, 
+      COALESCE(
+        JSON_ARRAYAGG(
+          JSON_OBJECT(
+            'id', oi.product_id,
+            'name', oi.product_name,
+            'quantity', oi.quantity,
+            'price', oi.price
+          )
+        ), '[]'
+      ) AS cart_items
+    FROM orders o
+    LEFT JOIN order_items oi ON o.id = oi.order_id
+    GROUP BY o.id
+    ORDER BY o.created_at DESC
+  `);
 
   // 3. Sanitize both separately
   const safeProducts = JSON.parse(JSON.stringify(productsData));
