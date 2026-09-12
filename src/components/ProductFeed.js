@@ -3,6 +3,20 @@
 import { useState } from "react";
 import ProductCard from "./ProductCard";
 
+// Category → accent color, matching the same palette used in the admin
+// dashboard's MASTER_CATEGORIES, so the storefront and admin visually
+// speak the same language.
+const CATEGORY_COLORS = {
+  "🧼 Household & Cleaning": "#22d3ee",
+  "🧴 Personal Care & Health": "#f472b6",
+  "🥫 Pantry & Cooking": "#fbbf24",
+  "🍫 Snacks & Beverages": "#fb7185",
+  "👶 Baby & Pet Care": "#2dd4bf",
+  "🥩 Meats, Seafood & Deli": "#f87171",
+  "🥬 Fresh Produce": "#4ade80",
+  "🏍️ Custom Pabili / Others": "#c084fc",
+};
+
 export default function ProductFeed({ allProducts }) {
   const [activeCategory, setActiveCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -17,23 +31,24 @@ export default function ProductFeed({ allProducts }) {
     "👶 Baby & Pet Care",
     "🥩 Meats, Seafood & Deli",
     "🥬 Fresh Produce",
-    "🏍️ Custom Pabili / Others"
-    
+    "🏍️ Custom Pabili / Others",
   ];
 
   // 👇 2. NEW: Safely extract the new JSON tags array from the database 👇
   const getProductTags = (product) => {
     try {
-      return typeof product.tags === 'string' ? JSON.parse(product.tags) : (product.tags || []);
+      return typeof product.tags === "string"
+        ? JSON.parse(product.tags)
+        : product.tags || [];
     } catch (e) {
       return [];
     }
   };
 
- // 3. Filter products ONLY by search query first
+  // 3. Filter products ONLY by search query first
   const searchFilteredProducts = allProducts.filter((product) => {
     // 1. DEFINE VARIABLES FIRST
-    const query = searchQuery.toLowerCase(); 
+    const query = searchQuery.toLowerCase();
     const safeDescription = product.description || "";
     const productBrand = product.brand || "S&R / Unbranded";
 
@@ -44,18 +59,22 @@ export default function ProductFeed({ allProducts }) {
       safeDescription.toLowerCase().includes(query) ||
       productBrand.toLowerCase().includes(query);
 
-    return matchesSearch; 
+    return matchesSearch;
   });
 
   // 4. UPGRADED: Group the filtered products by their new tags!
   // Since a product can have multiple tags, it will automatically appear in all relevant rows.
+  // Note: if the same product keeps showing up in several unrelated rows, that's
+  // a sign it has too many tags checked in the admin dashboard, not a bug here —
+  // worth trimming those tags down to just the categories that actually fit.
   const groupedProducts = {};
-  
-  CATEGORIES.slice(1).forEach((categoryName) => { // Skip "All"
-    const productsInThisCategory = searchFilteredProducts.filter(product => 
-      getProductTags(product).includes(categoryName)
+
+  CATEGORIES.slice(1).forEach((categoryName) => {
+    // Skip "All"
+    const productsInThisCategory = searchFilteredProducts.filter((product) =>
+      getProductTags(product).includes(categoryName),
     );
-    
+
     if (productsInThisCategory.length > 0) {
       groupedProducts[categoryName] = productsInThisCategory;
     }
@@ -70,9 +89,9 @@ export default function ProductFeed({ allProducts }) {
   return (
     <div className="w-full">
       {/* Premium Sticky Search Bar */}
-      {/* Background matches the main page (#0a0a09) */}
-      <div className="sticky top-0 z-40 bg-[#0a0a09] pt-5 pb-1 w-full ">
-        <div className="max-w-4xl mx-auto px-6">
+      {/* top-14 accounts for the 56px sticky brand bar in page.js above it */}
+      <div className="sticky top-14 z-40 bg-[#0a0a09] h-16 flex items-center w-full">
+        <div className="max-w-4xl mx-auto px-6 w-full">
           <div className="relative">
             {/* Search Icon changed to muted accent */}
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c3afb7]">
@@ -91,20 +110,26 @@ export default function ProductFeed({ allProducts }) {
       </div>
 
       {/* Premium Swipeable Category Tabs */}
-      {/* Container background and bottom border matched to dark theme */}
-      <div className="bg-[#0a0a09] border-b border-[#c3afb7]/30 sticky top-[72px] z-30 mb-8">
+      {/* top-[120px] = 56px brand bar + 64px search bar, so nothing overlaps */}
+      <div className="bg-[#0a0a09] border-b border-[#c3afb7]/30 sticky top-[120px] z-30 mb-8">
         <div className="max-w-4xl mx-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-6">
           <div className="flex gap-2 py-4 w-max">
             {CATEGORIES.map((category) => (
               <button
                 key={category}
                 onClick={() => setActiveCategory(category)}
-                className={`whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
+                className={`whitespace-nowrap flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-bold transition-all ${
                   activeCategory === category
                     ? "bg-[#d6eb1d] text-[#0a0a09] shadow-md" // Active: Vivid Yellow Green with Dark Text
                     : "bg-[#c3afb7]/10 text-[#c3afb7] hover:bg-[#c3afb7]/20 hover:text-white" // Inactive: Muted Accent
                 }`}
               >
+                {CATEGORY_COLORS[category] && (
+                  <span
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: CATEGORY_COLORS[category] }}
+                  />
+                )}
                 {category}
               </button>
             ))}
@@ -113,6 +138,21 @@ export default function ProductFeed({ allProducts }) {
       </div>
 
       <div className="max-w-4xl mx-auto">
+        {/* Sleek Mobile-Friendly Custom Request Banner — shown ONCE, not per category */}
+        {categoriesToShow.length > 0 && (
+          <div className="mx-6 mb-8 bg-gradient-to-br from-[#c3afb7]/10 to-[#0a0a09] rounded-xl p-4 text-white shadow-lg border border-[#c3afb7]/30 flex items-start gap-3">
+            <span className="text-2xl leading-none pt-0.5">🕵️‍♂️</span>
+            <div>
+              <h3 className="text-base font-bold mb-1">Can't find an item?</h3>
+              <p className="text-xs text-[#c3afb7] leading-snug">
+                List any unlisted S&R or local items in the{" "}
+                <strong className="text-white">Notes</strong> at checkout.
+                We'll buy it for you!
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Not Found State - Updated for dark mode */}
         {categoriesToShow.length === 0 ? (
           <div className="mx-6 text-center py-12 text-[#c3afb7] font-medium bg-[#0a0a09] rounded-xl border border-[#c3afb7]/30 border-dashed">
@@ -122,9 +162,15 @@ export default function ProductFeed({ allProducts }) {
           /* Map through the categories to create the Rows */
           categoriesToShow.map((categoryName) => (
             <div key={categoryName} className="mb-10">
-              {/* Row Header with dynamic "View All" button */}
+              {/* Row Header with dynamic "View All" button + category color accent */}
               <div className="flex justify-between items-center mb-4 px-6">
-                <h2 className="text-xl font-black text-white">
+                <h2 className="text-xl font-black text-white flex items-center gap-2.5">
+                  <span
+                    className="w-1 h-5 rounded-full flex-shrink-0"
+                    style={{
+                      backgroundColor: CATEGORY_COLORS[categoryName] || "#acbf00",
+                    }}
+                  />
                   {categoryName}
                 </h2>
                 {activeCategory === "All" && (
@@ -137,21 +183,6 @@ export default function ProductFeed({ allProducts }) {
                 )}
               </div>
 
-              {/* Sleek Mobile-Friendly Custom Request Banner */}
-              <div className="mx-6 mb-8 bg-gradient-to-br from-[#c3afb7]/10 to-[#0a0a09] rounded-xl p-4 text-white shadow-lg border border-[#c3afb7]/30 flex items-start gap-3">
-                <span className="text-2xl leading-none pt-0.5">🕵️‍♂️</span>
-                <div>
-                  <h3 className="text-base font-bold mb-1">
-                    Can't find an item?
-                  </h3>
-                  <p className="text-xs text-[#c3afb7] leading-snug">
-                    List any unlisted S&R or local items in the{" "}
-                    <strong className="text-white">Notes</strong> at checkout.
-                    We'll buy it for you!
-                  </p>
-                </div>
-              </div>
-
               {/* Conditional Layout (Swipe vs Grid) */}
               {activeCategory === "All" ? (
                 /* 1. HORIZONTAL SWIPE */
@@ -161,7 +192,10 @@ export default function ProductFeed({ allProducts }) {
                       key={product.id}
                       className="snap-start flex-shrink-0 w-[48vw] min-w-[170px] md:w-[220px]"
                     >
-                      <ProductCard product={product} />
+                      <ProductCard
+                        product={product}
+                        accentColor={CATEGORY_COLORS[categoryName]}
+                      />
                     </div>
                   ))}
                 </div>
@@ -170,7 +204,10 @@ export default function ProductFeed({ allProducts }) {
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 px-6 pb-4">
                   {groupedProducts[categoryName].map((product) => (
                     <div key={product.id} className="w-full flex">
-                      <ProductCard product={product} />
+                      <ProductCard
+                        product={product}
+                        accentColor={CATEGORY_COLORS[categoryName]}
+                      />
                     </div>
                   ))}
                 </div>

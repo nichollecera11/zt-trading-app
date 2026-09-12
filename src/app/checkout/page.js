@@ -191,6 +191,14 @@ export default function Checkout() {
   return (
     <main className="min-h-screen bg-[#0a0a09] py-12 px-6">
       <div className="max-w-xl mx-auto">
+        {/* Small brand mark, consistent with the sticky bar on the storefront */}
+        <div className="flex items-center gap-2 font-bold text-sm mb-6">
+          <span className="w-6 h-6 rounded-md bg-gradient-to-br from-[#acbf00] to-[#d6eb1d] flex items-center justify-center text-[#0a0a09] text-[10px] font-black">
+            SB
+          </span>
+          <span className="text-[#c3afb7]">SWIFTBAG</span>
+        </div>
+
         <Link
           href="/"
           className="text-sm font-bold text-[#c3afb7] mb-6 inline-block hover:text-white transition-colors"
@@ -200,8 +208,15 @@ export default function Checkout() {
 
         <h1 className="text-3xl font-black text-white mb-8">Checkout</h1>
 
-        {/* ORDER SUMMARY BOX */}
-        <div className="bg-[#0a0a09] p-6 rounded-xl shadow-sm border border-[#c3afb7]/30 mb-8">
+        {/* ORDER SUMMARY BOX — styled as a receipt, matching the homepage hero */}
+        <div className="relative bg-[#141412] p-6 rounded-xl shadow-sm border border-[#c3afb7]/20 mb-8 overflow-hidden">
+          <div
+            className="absolute top-0 left-0 right-0 h-[3px]"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(90deg, #acbf00 0 8px, transparent 8px 16px)",
+            }}
+          />
           <h2 className="font-bold text-lg text-white mb-4 border-b border-[#c3afb7]/30 pb-2">
             Order Summary
           </h2>
@@ -227,7 +242,8 @@ export default function Checkout() {
                   <button
                     type="button"
                     onClick={() => decreaseQuantity(item.id)}
-                    className="px-3 py-1 text-[#c3afb7] hover:bg-[#c3afb7]/20 hover:text-white font-bold transition-colors"
+                    aria-label={`Remove one ${item.name}`}
+                    className="px-3 py-1 text-[#c3afb7] hover:bg-[#d6eb1d] hover:text-[#0a0a09] font-bold transition-colors"
                   >
                     -
                   </button>
@@ -237,7 +253,8 @@ export default function Checkout() {
                   <button
                     type="button"
                     onClick={() => increaseQuantity(item.id)}
-                    className="px-3 py-1 text-[#c3afb7] hover:bg-[#c3afb7]/20 hover:text-white font-bold transition-colors"
+                    aria-label={`Add one more ${item.name}`}
+                    className="px-3 py-1 text-[#c3afb7] hover:bg-[#d6eb1d] hover:text-[#0a0a09] font-bold transition-colors"
                   >
                     +
                   </button>
@@ -250,6 +267,7 @@ export default function Checkout() {
                 <button
                   type="button"
                   onClick={() => removeItem(item.id)}
+                  aria-label={`Remove ${item.name} from cart`}
                   className="text-[#c3afb7] hover:text-red-500 transition-colors p-1"
                   title="Remove item"
                 >
@@ -260,7 +278,7 @@ export default function Checkout() {
           ))}
 
           {/* TOTALS */}
-          <div className="mt-4 pt-4 border-t border-[#c3afb7]/30 space-y-2">
+          <div className="mt-4 pt-4 border-t border-dashed border-[#c3afb7]/30 space-y-2">
             <div className="flex justify-between text-sm text-[#c3afb7] font-medium">
               <span>Subtotal</span>
               <span className="text-white">₱{subtotal.toFixed(2)}</span>
@@ -271,7 +289,7 @@ export default function Checkout() {
                 ₱{selectedDistance.fee.toFixed(2)}
               </span>
             </div>
-            <div className="flex justify-between mt-2 pt-2 border-t border-[#c3afb7]/30 font-black text-xl text-white">
+            <div className="flex justify-between mt-2 pt-2 border-t border-dashed border-[#c3afb7]/30 font-black text-xl text-white">
               <span>Grand Total</span>
               <span className="text-[#d6eb1d]">₱{grandTotal.toFixed(2)}</span>
             </div>
@@ -281,7 +299,7 @@ export default function Checkout() {
         {/* DELIVERY DETAILS FORM */}
         <form
           onSubmit={handleOrder}
-          className="bg-[#0a0a09] p-6 rounded-xl shadow-sm border border-[#c3afb7]/30"
+          className="bg-[#141412] p-6 rounded-xl shadow-sm border border-[#c3afb7]/20"
         >
           <h2 className="font-bold text-lg text-white mb-4">
             Delivery Details
@@ -304,28 +322,38 @@ export default function Checkout() {
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-white mb-1">
+              <label className="block text-sm font-bold text-white mb-2">
                 Select Delivery Distance
               </label>
-              <select
-                className="w-full bg-[#0a0a09] text-white border border-[#c3afb7]/30 rounded-lg p-3 focus:ring-1 focus:ring-[#d6eb1d] focus:border-[#d6eb1d] focus:outline-none transition-all font-medium"
-                onChange={(e) => {
-                  const distance = deliveryDistances.find(
-                    (d) => d.id === e.target.value,
-                  );
-                  setSelectedDistance(distance);
-                }}
-              >
+              {/* Zone picker, styled the same way as the ordering-platform
+                  picker below it, instead of a plain native <select> */}
+              <div className="flex flex-col gap-2">
                 {deliveryDistances.map((dist) => (
-                  <option
+                  <button
                     key={dist.id}
-                    value={dist.id}
-                    className="bg-[#0a0a09]"
+                    type="button"
+                    onClick={() => setSelectedDistance(dist)}
+                    className={`flex items-center justify-between text-left p-3 rounded-lg border transition-all ${
+                      selectedDistance.id === dist.id
+                        ? "border-[#d6eb1d] bg-[#d6eb1d]/10"
+                        : "border-[#c3afb7]/30 hover:bg-[#c3afb7]/10"
+                    }`}
                   >
-                    {dist.name} (+₱{dist.fee})
-                  </option>
+                    <span
+                      className={`text-sm font-medium ${
+                        selectedDistance.id === dist.id
+                          ? "text-[#d6eb1d]"
+                          : "text-[#c3afb7]"
+                      }`}
+                    >
+                      {dist.name}
+                    </span>
+                    <span className="text-sm font-black text-white whitespace-nowrap ml-3">
+                      +₱{dist.fee.toFixed(2)}
+                    </span>
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
 
             <div>
