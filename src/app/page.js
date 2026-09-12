@@ -39,10 +39,10 @@ export default async function Home() {
             <img
               src="/images/logo-ui.png"
               alt="SwiftBag Logo"
-              className="w-20 h-20 object-contain drop-shadow-md"
+              className="w-20 h-20 object-contain drop-shadow-md animate-logo transition-all duration-500 hover:scale-105 hover:-translate-y-1 hover:drop-shadow-xl cursor-pointer"
             />
           </div>
-          <span className="text-[11px] font-semibold text-[#c3afb7] border border-[#c3afb7]/25 rounded-full px-3 py-1">
+          <span className="text-[11px] animate-logo font-semibold text-[#c3afb7] border border-[#c3afb7]/25 rounded-full px-3 py-1">
             {products.length} items available
           </span>
         </div>
