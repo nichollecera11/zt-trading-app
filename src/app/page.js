@@ -34,7 +34,7 @@ export default async function Home() {
         {/* STICKY MINI-HEADER (brand mark only — your   */}
         {/* full hero below carries the real branding)   */}
         {/* ========================================== */}
-        <div className="sticky top-0 z-50 h-14 flex items-center justify-between px-5 border-b border-[#c3afb7]/15 bg-[#0a0a09]/90 backdrop-blur-sm">
+        <div className="z-50 h-14 flex items-center justify-between px-5 border-b border-[#c3afb7]/15 bg-[#0a0a09]/90 backdrop-blur-sm">
           <div className="flex items-center gap-2 font-bold text-sm">
             <img
               src="/images/logo-ui.png"
