@@ -451,7 +451,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       <div className="w-64 bg-gray-900 text-white flex flex-col hidden md:flex">
         <div className="p-6">
           <h2 className="text-2xl font-black tracking-wider text-blue-400">
-            ZT TRADING
+            SWIFTBAG
           </h2>
           <p className="text-gray-400 text-sm mt-1">Admin Control Room</p>
         </div>
