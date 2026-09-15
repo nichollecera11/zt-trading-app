@@ -90,7 +90,7 @@ export default function ProductFeed({ allProducts }) {
     <div className="w-full">
       {/* Premium Sticky Search Bar */}
       {/* top-14 = exactly the 56px (h-14) brand bar in page.js above it */}
-      <div className="sticky top-14 z-40 bg-[#0a0a09] h-16 flex items-center w-full">
+      <div className="sticky top-20 z-40 bg-[#0a0a09] h-16 flex items-center w-full">
         <div className="max-w-4xl lg:max-w-full lg:px-12 mx-auto px-6 w-full">
           <div className="relative">
             {/* Search Icon changed to muted accent */}
@@ -111,7 +111,7 @@ export default function ProductFeed({ allProducts }) {
 
       {/* Premium Swipeable Category Tabs */}
       {/* top-[120px] = 56px brand bar + 64px (h-16) search bar - matches exactly, no gap/overlap */}
-      <div className="bg-[#0a0a09] border-b border-[#c3afb7]/30 sticky top-[120px] z-30 mb-8">
+      <div className="bg-[#0a0a09] border-b border-[#c3afb7]/30 sticky top-[130px] z-30 mb-8">
         <div className="max-w-4xl lg:max-w-full lg:px-12 mx-auto overflow-x-auto lg:overflow-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-6">
           <div className="flex lg:flex-wrap gap-2 py-4 w-max lg:w-full">
             {CATEGORIES.map((category) => (
