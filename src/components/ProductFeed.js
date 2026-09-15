@@ -90,8 +90,8 @@ export default function ProductFeed({ allProducts }) {
     <div className="w-full">
       {/* Premium Sticky Search Bar */}
       {/* top-14 accounts for the 56px sticky brand bar in page.js above it */}
-      <div className="sticky top-0 z-40 bg-[#0a0a09] h-16 flex items-center w-full">
-        <div className="max-w-4xl mx-auto px-6 w-full">
+      <div className="sticky top-20 z-40 bg-[#0a0a09] h-16 flex items-center w-full">
+        <div className="max-w-4xl lg:max-w-full lg:px-12 mx-auto px-6 w-full">
           <div className="relative">
             {/* Search Icon changed to muted accent */}
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#c3afb7]">
@@ -111,8 +111,8 @@ export default function ProductFeed({ allProducts }) {
 
       {/* Premium Swipeable Category Tabs */}
       {/* top-[120px] = 56px brand bar + 64px search bar, so nothing overlaps */}
-      <div className="bg-[#0a0a09] border-b border-[#c3afb7]/30 sticky top-[60px] z-30 mb-8">
-        <div className="max-w-4xl mx-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-6">
+      <div className="bg-[#0a0a09] border-b border-[#c3afb7]/30 sticky top-[130px] z-30 mb-8">
+        <div className="flex flex-nowrap gap-3 max-w-4xl lg:max-w-full lg:px-12 mx-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-6 w-full">
           <div className="flex gap-2 py-4 w-max">
             {CATEGORIES.map((category) => (
               <button
@@ -137,10 +137,10 @@ export default function ProductFeed({ allProducts }) {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl lg:max-w-full lg:px-12 mx-auto w-full">
         {/* Sleek Mobile-Friendly Custom Request Banner — shown ONCE, not per category */}
         {categoriesToShow.length > 0 && (
-          <div className="mx-6 mb-8 bg-gradient-to-br from-[#c3afb7]/10 to-[#0a0a09] rounded-xl p-4 text-white shadow-lg border border-[#c3afb7]/30 flex items-start gap-3">
+          <div className="mx-6 lg:mx-0 mb-8 bg-gradient-to-br from-[#c3afb7]/10 to-[#0a0a09] rounded-xl p-4 text-white shadow-lg border border-[#c3afb7]/30 flex items-start gap-3">
             <span className="text-2xl leading-none pt-0.5">🕵️‍♂️</span>
             <div>
               <h3 className="text-base font-bold mb-1">Can't find an item?</h3>
@@ -163,7 +163,7 @@ export default function ProductFeed({ allProducts }) {
           categoriesToShow.map((categoryName) => (
             <div key={categoryName} className="mb-10">
               {/* Row Header with dynamic "View All" button + category color accent */}
-              <div className="flex justify-between items-center mb-4 px-6">
+              <div className="flex justify-between items-center mb-4 px-6 lg:px-0">
                 <h2 className="text-xl font-black text-white flex items-center gap-2.5">
                   <span
                     className="w-1 h-5 rounded-full flex-shrink-0"
@@ -185,12 +185,15 @@ export default function ProductFeed({ allProducts }) {
 
               {/* Conditional Layout (Swipe vs Grid) */}
               {activeCategory === "All" ? (
-                /* 1. HORIZONTAL SWIPE */
-                <div className="flex overflow-x-auto gap-4 px-6 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                /* Mobile/tablet: horizontal swipe row (great on touch).
+                   Desktop (lg+): wraps into a real grid instead — nobody
+                   expects to swipe a mouse, and a swipe row on a wide
+                   screen just looks like cut-off cards next to empty space. */
+                <div className="flex overflow-x-auto gap-4 px-6 lg:px-0 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] lg:grid lg:grid-cols-5 xl:grid-cols-5 2xl:grid-cols-6 lg:overflow-visible lg:snap-none lg:pb-0">
                   {groupedProducts[categoryName].map((product) => (
                     <div
                       key={product.id}
-                      className="snap-start flex-shrink-0 w-[48vw] min-w-[170px] md:w-[220px]"
+                      className="snap-start flex-shrink-0 w-[48vw] min-w-[170px] md:w-[220px] lg:w-auto lg:flex-shrink lg:min-w-0"
                     >
                       <ProductCard
                         product={product}
@@ -201,7 +204,7 @@ export default function ProductFeed({ allProducts }) {
                 </div>
               ) : (
                 /* 2. FULL GRID */
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 px-6 pb-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 px-6 lg:px-0 pb-4">
                   {groupedProducts[categoryName].map((product) => (
                     <div key={product.id} className="w-full flex">
                       <ProductCard
