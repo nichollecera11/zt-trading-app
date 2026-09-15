@@ -89,8 +89,8 @@ export default function ProductFeed({ allProducts }) {
   return (
     <div className="w-full">
       {/* Premium Sticky Search Bar */}
-      {/* top-14 accounts for the 56px sticky brand bar in page.js above it */}
-      <div className="sticky top-20 z-40 bg-[#0a0a09] h-16 flex items-center w-full">
+      {/* top-14 = exactly the 56px (h-14) brand bar in page.js above it */}
+      <div className="sticky top-14 z-40 bg-[#0a0a09] h-16 flex items-center w-full">
         <div className="max-w-4xl lg:max-w-full lg:px-12 mx-auto px-6 w-full">
           <div className="relative">
             {/* Search Icon changed to muted accent */}
@@ -110,10 +110,10 @@ export default function ProductFeed({ allProducts }) {
       </div>
 
       {/* Premium Swipeable Category Tabs */}
-      {/* top-[120px] = 56px brand bar + 64px search bar, so nothing overlaps */}
-      <div className="bg-[#0a0a09] border-b border-[#c3afb7]/30 sticky top-[130px] z-30 mb-8">
-        <div className="flex flex-nowrap gap-3 max-w-4xl lg:max-w-full lg:px-12 mx-auto overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-6 w-full">
-          <div className="flex gap-2 py-4 w-max">
+      {/* top-[120px] = 56px brand bar + 64px (h-16) search bar - matches exactly, no gap/overlap */}
+      <div className="bg-[#0a0a09] border-b border-[#c3afb7]/30 sticky top-[120px] z-30 mb-8">
+        <div className="max-w-4xl lg:max-w-full lg:px-12 mx-auto overflow-x-auto lg:overflow-visible [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] px-6">
+          <div className="flex lg:flex-wrap gap-2 py-4 w-max lg:w-full">
             {CATEGORIES.map((category) => (
               <button
                 key={category}
@@ -155,7 +155,7 @@ export default function ProductFeed({ allProducts }) {
 
         {/* Not Found State - Updated for dark mode */}
         {categoriesToShow.length === 0 ? (
-          <div className="mx-6 text-center py-12 text-[#c3afb7] font-medium bg-[#0a0a09] rounded-xl border border-[#c3afb7]/30 border-dashed">
+          <div className="mx-6 lg:mx-0 text-center py-12 text-[#c3afb7] font-medium bg-[#0a0a09] rounded-xl border border-[#c3afb7]/30 border-dashed">
             No products found for "{searchQuery}"
           </div>
         ) : (
@@ -186,14 +186,21 @@ export default function ProductFeed({ allProducts }) {
               {/* Conditional Layout (Swipe vs Grid) */}
               {activeCategory === "All" ? (
                 /* Mobile/tablet: horizontal swipe row (great on touch).
-                   Desktop (lg+): wraps into a real grid instead — nobody
-                   expects to swipe a mouse, and a swipe row on a wide
-                   screen just looks like cut-off cards next to empty space. */
+                   Desktop (lg+): wraps into a real grid instead.
+
+                   IMPORTANT: card width below is a PERCENTAGE of this flex
+                   container, not `vw` (viewport width). `vw` measures the
+                   whole browser window and knows nothing about this
+                   container's own left/right padding, so two 48vw cards
+                   never line up flush with the px-6/lg:px-12 edges the
+                   search bar and category pills use — that's what caused
+                   the misalignment. A percentage is relative to this same
+                   padded box, so it's guaranteed to match. */
                 <div className="flex overflow-x-auto gap-4 px-6 lg:px-0 pb-4 snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] lg:grid lg:grid-cols-5 xl:grid-cols-5 2xl:grid-cols-6 lg:overflow-visible lg:snap-none lg:pb-0">
                   {groupedProducts[categoryName].map((product) => (
                     <div
                       key={product.id}
-                      className="snap-start flex-shrink-0 w-[48vw] min-w-[170px] md:w-[220px] lg:w-auto lg:flex-shrink lg:min-w-0"
+                      className="snap-start flex-shrink-0 w-[45%] min-w-[155px] sm:w-[32%] md:w-[220px] lg:w-auto lg:min-w-0"
                     >
                       <ProductCard
                         product={product}

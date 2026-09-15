@@ -23,8 +23,17 @@ export default function ProductCard({ product, accentColor }) {
         style={{ backgroundColor: accentColor || "#acbf00" }}
       />
 
-      {/* Image Placeholder */}
-      <div className="h-48 bg-[#c3afb7]/10 w-full flex items-center justify-center text-[#c3afb7] overflow-hidden relative flex-shrink-0">
+      {/* Image area. White backdrop ONLY when there's a real photo - object-contain
+          on a white card (instead of the old object-cover) keeps product labels
+          from getting cropped on desktop. But when there's no photo yet, we fall
+          back to the dark muted background instead of white, so the "Photo coming
+          soon" placeholder (light mauve icon/text) stays readable - white-on-white
+          was the bug the object-contain switch accidentally introduced. */}
+      <div
+        className={`w-full aspect-square flex items-center justify-center overflow-hidden relative flex-shrink-0 ${
+          product.image_url ? "bg-white" : "bg-[#c3afb7]/10"
+        }`}
+      >
         {product.image_url ? (
           <img
             src={product.image_url}
@@ -32,7 +41,7 @@ export default function ProductCard({ product, accentColor }) {
             loading="lazy"
             width={400}
             height={400}
-            className="w-full h-48 object-cover"
+            className="w-full h-full object-contain p-4"
           />
         ) : (
           <div className="flex flex-col items-center gap-2 text-[#c3afb7]/60">
