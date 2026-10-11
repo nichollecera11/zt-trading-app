@@ -17,6 +17,98 @@ function getTags(product) {
   }
 }
 
+
+// ---------------------------------------------------------------------
+// Turns the raw description from the admin into bullet points WITHOUT
+// changing what is stored in the database. A new bullet starts when:
+//   1. the admin pressed Enter (new line), or
+//   2. a new "Label:" begins, e.g. "Net Weight: 7.11 KGs Product Dimensions: ..."
+//      -> "Net Weight: 7.11 KGs" / "Product Dimensions: ..."
+//   3. a new sentence begins (previous word ended with . ! or ?)
+//
+// Why not literally "every capital letter"? Because that would also cut
+// "Net | Weight:", "K | G | s", "S | & | R" and brand names in the middle.
+// So we only count a capital as a bullet start when it begins a label
+// or a sentence.
+// ---------------------------------------------------------------------
+// Longest label (in capitalized words) such as "Net Weight" = 2.
+// Raise to 3 if you have labels like "Item Package Quantity:".
+const MAX_LABEL_WORDS = 2;
+const CONNECTORS = new Set(["of", "and", "&", "for", "in", "per", "with", "to"]);
+const UNITS = new Set([
+  "kg", "kgs", "g", "gm", "mg", "ml", "l", "lb", "lbs", "oz",
+  "pc", "pcs", "pack", "packs", "sheets", "ply", "cm", "mm", "m",
+  "pieces", "count", "ct",
+]);
+
+// A word that can be part of a label: starts with a capital, has no digits,
+// isn't a unit (Kg, KGs, Pcs) and isn't mixed like "KGs".
+function isLabelWord(word) {
+  if (!/^[A-Z]/.test(word)) return false;
+  if (/\d/.test(word)) return false;
+  if (/^[A-Z]{2,}[a-z]/.test(word)) return false;
+  if (UNITS.has(word.toLowerCase())) return false;
+  return true;
+}
+
+function toBullets(description) {
+  if (!description) return [];
+  const bullets = [];
+
+  String(description)
+    .split(/\r?\n/)
+    .forEach((line) => {
+      const tokens = line.trim().split(/\s+/).filter(Boolean);
+      if (tokens.length === 0) return;
+
+      const starts = new Set([0]);
+
+      tokens.forEach((token, i) => {
+        // New sentence: previous word ended with . ! ? and this one is Capitalized
+        if (i > 0 && /[.!?]$/.test(tokens[i - 1]) && /^[A-Z]/.test(token)) {
+          starts.add(i);
+        }
+
+        // New label: a word ending in ":" -> walk back over the capitalized
+        // words that belong to the same label (max 5 words)
+        if (token.length > 1 && token.endsWith(":") && isLabelWord(token.slice(0, -1))) {
+          let start = i;
+          let words = 1;
+          for (let j = i - 1; j >= 0 && i - j < 6; j--) {
+            const w = tokens[j];
+            if (/[:.!?;,]$/.test(w)) break;
+            // never grab the first word of the previous label's value
+            if (j > 0 && tokens[j - 1].endsWith(":")) break;
+            if (isLabelWord(w)) {
+              if (words >= MAX_LABEL_WORDS) break;
+              start = j;
+              words++;
+            } else if (CONNECTORS.has(w.toLowerCase())) continue;
+            else break;
+          }
+          starts.add(start);
+        }
+      });
+
+      const sorted = [...starts].sort((a, b) => a - b);
+      sorted.forEach((from, idx) => {
+        const to = sorted[idx + 1] ?? tokens.length;
+        bullets.push(tokens.slice(from, to).join(" "));
+      });
+    });
+
+  return bullets;
+}
+
+// "Net Weight: 7.11 KGs" -> label in white, value in muted
+function splitLabel(bullet) {
+  const m = bullet.match(/^([^:]{1,40}):\s*(.*)$/);
+  if (m && m[1].trim().split(/\s+/).length <= 5) {
+    return { label: m[1], value: m[2] };
+  }
+  return { label: null, value: bullet };
+}
+
 export default function ProductModal({ product, accentColor, onClose }) {
   const cart = useCart((state) => state.items) || [];
   const addToCart = useCart((state) => state.addItem);
@@ -26,6 +118,7 @@ export default function ProductModal({ product, accentColor, onClose }) {
   const cartItem = cart.find((item) => item.id === product.id);
   const accent = accentColor || "#acbf00";
   const tags = getTags(product);
+  const bullets = toBullets(product.description);
   const unitPrice = Number(product.price);
 
   // Close on Escape + lock background scroll while the sheet is open
@@ -141,14 +234,40 @@ export default function ProductModal({ product, accentColor, onClose }) {
               </div>
             )}
 
-            {product.description && (
+            {bullets.length > 0 && (
               <div className="mt-5 pt-5 border-t border-dashed border-[#c3afb7]/20">
-                <h3 className="text-sm font-bold mb-2">Product details</h3>
-                {/* Full description, no line-clamp. pre-line keeps any
-                    line breaks you typed in the admin dashboard. */}
-                <p className="text-sm text-[#c3afb7] leading-relaxed whitespace-pre-line break-words">
-                  {product.description}
-                </p>
+                <h3 className="text-sm font-bold mb-3">Product details</h3>
+                {bullets.length === 1 && !splitLabel(bullets[0]).label ? (
+                  // Nothing to split, so show it as a normal paragraph
+                  <p className="text-sm text-[#c3afb7] leading-relaxed break-words">
+                    {bullets[0]}
+                  </p>
+                ) : (
+                  <ul className="space-y-2.5">
+                    {bullets.map((bullet, i) => {
+                      const { label, value } = splitLabel(bullet);
+                      return (
+                        <li
+                          key={i}
+                          className="flex gap-3 text-sm leading-relaxed"
+                        >
+                          <span
+                            className="mt-[9px] w-1.5 h-1.5 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: accent }}
+                          />
+                          <span className="text-[#c3afb7] break-words min-w-0">
+                            {label && (
+                              <span className="text-white font-semibold">
+                                {label}:{" "}
+                              </span>
+                            )}
+                            {value}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
               </div>
             )}
           </div>
