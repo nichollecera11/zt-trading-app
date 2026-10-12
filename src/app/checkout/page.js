@@ -17,23 +17,23 @@ export default function Checkout() {
   const deliveryDistances = [
     {
       id: "dist1",
-      name: "0 - 3km (Kauswagan, Carmen, Bayabas, Patag)",
-      fee: 50.0,
+      name: "Patag, Kauswagan, Bulua",
+      fee: 30.0,
     },
     {
       id: "dist2",
-      name: "3 - 6km (Divisoria, Macasandig, Lapasan, Iponan, Bulua)",
-      fee: 80.0,
+      name: "3 - 6km (Divisoria, Carmen, Bayabas, Macasandig, Lapasan, Iponan)",
+      fee: 50.0,
     },
     {
       id: "dist3",
       name: "6 - 10km (Gusa, Cugman, Balulang, Lumbia, Opol)",
-      fee: 130.0,
+      fee: 100.0,
     },
     {
       id: "dist4",
       name: "10km+ (Tablon, Agusan, Puerto, Bugo, El Salvador)",
-      fee: 180.0,
+      fee: 160.0,
     },
   ];
 
@@ -68,7 +68,7 @@ export default function Checkout() {
   );
 
   const subtotal = items.reduce(
-    (sum, item) => sum + Number(item.price) * item.quantity,
+    (sum, item) => sum + Number(item.price) * 1.10 * item.quantity,
     0,
   );
   const grandTotal = subtotal + selectedDistance.fee;
@@ -83,10 +83,11 @@ export default function Checkout() {
     message += `*Distance/Area:* ${selectedDistance.name}\n`;
     message += `*Phone:* ${formData.phone}\n`;
     message += `*Notes:* ${formData.notes || "None"}\n\n`;
-    message += `*Order Summary:*\n`;
+    message += `*Order Summary (Inc. 10% Service Fee):*\n`;
 
     items.forEach((item) => {
-      message += `- ${item.quantity}x ${item.name} (₱${(item.price * item.quantity).toFixed(2)})\n`;
+      const adjustedPrice = Number(item.price) * 1.10;
+      message += `- ${item.quantity}x ${item.name} (₱${(adjustedPrice * item.quantity).toFixed(2)})\n`;
     });
 
     message += `\n*Subtotal:* ₱${subtotal.toFixed(2)}`;
@@ -105,7 +106,10 @@ export default function Checkout() {
           selectedDistance,
           subtotal,
           grandTotal,
-          items,
+          items: items.map(item => ({
+            ...item,
+            price: Number(item.price) * 1.10
+          })),
           orderMethod,
         }),
       });
@@ -221,66 +225,69 @@ export default function Checkout() {
             Order Summary
           </h2>
 
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-[#c3afb7]/10 rounded-xl border border-[#c3afb7]/20 mb-3"
-            >
-              {/* Product Name & Single Price */}
-              <div className="flex-1">
-                <h4 className="font-semibold text-white text-sm leading-tight">
-                  {item.name}
-                </h4>
-                <p className="text-xs font-bold text-[#c3afb7] mt-1">
-                  ₱{Number(item.price).toFixed(2)} each
-                </p>
-              </div>
-
-              {/* Controls: Plus/Minus, Total, Remove */}
-              <div className="flex items-center gap-3 self-end sm:self-auto">
-                <div className="flex items-center border border-[#c3afb7]/30 rounded-lg overflow-hidden shadow-sm bg-transparent">
-                  <button
-                    type="button"
-                    onClick={() => decreaseQuantity(item.id)}
-                    aria-label={`Remove one ${item.name}`}
-                    className="px-3 py-1 text-[#c3afb7] hover:bg-[#d6eb1d] hover:text-[#0a0a09] font-bold transition-colors"
-                  >
-                    -
-                  </button>
-                  <span className="px-3 text-sm font-bold text-white">
-                    {item.quantity}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => increaseQuantity(item.id)}
-                    aria-label={`Add one more ${item.name}`}
-                    className="px-3 py-1 text-[#c3afb7] hover:bg-[#d6eb1d] hover:text-[#0a0a09] font-bold transition-colors"
-                  >
-                    +
-                  </button>
+          {items.map((item) => {
+            const adjustedPrice = Number(item.price) * 1.10;
+            return (
+              <div
+                key={item.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-[#c3afb7]/10 rounded-xl border border-[#c3afb7]/20 mb-3"
+              >
+                {/* Product Name & Single Price */}
+                <div className="flex-1">
+                  <h4 className="font-semibold text-white text-sm leading-tight">
+                    {item.name}
+                  </h4>
+                  <p className="text-xs font-bold text-[#c3afb7] mt-1">
+                    ₱{adjustedPrice.toFixed(2)} each <span className="text-[10px] text-[#acbf00]">(Inc. 10%)</span>
+                  </p>
                 </div>
 
-                <span className="text-sm font-bold text-[#d6eb1d] w-16 text-right">
-                  ₱{(item.price * item.quantity).toFixed(2)}
-                </span>
+                {/* Controls: Plus/Minus, Total, Remove */}
+                <div className="flex items-center gap-3 self-end sm:self-auto">
+                  <div className="flex items-center border border-[#c3afb7]/30 rounded-lg overflow-hidden shadow-sm bg-transparent">
+                    <button
+                      type="button"
+                      onClick={() => decreaseQuantity(item.id)}
+                      aria-label={`Remove one ${item.name}`}
+                      className="px-3 py-1 text-[#c3afb7] hover:bg-[#d6eb1d] hover:text-[#0a0a09] font-bold transition-colors"
+                    >
+                      -
+                    </button>
+                    <span className="px-3 text-sm font-bold text-white">
+                      {item.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => increaseQuantity(item.id)}
+                      aria-label={`Add one more ${item.name}`}
+                      className="px-3 py-1 text-[#c3afb7] hover:bg-[#d6eb1d] hover:text-[#0a0a09] font-bold transition-colors"
+                    >
+                      +
+                    </button>
+                  </div>
 
-                <button
-                  type="button"
-                  onClick={() => removeItem(item.id)}
-                  aria-label={`Remove ${item.name} from cart`}
-                  className="text-[#c3afb7] hover:text-red-500 transition-colors p-1"
-                  title="Remove item"
-                >
-                  ✕
-                </button>
+                  <span className="text-sm font-bold text-[#d6eb1d] w-16 text-right">
+                    ₱{(adjustedPrice * item.quantity).toFixed(2)}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.id)}
+                    aria-label={`Remove ${item.name} from cart`}
+                    className="text-[#c3afb7] hover:text-red-500 transition-colors p-1"
+                    title="Remove item"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {/* TOTALS */}
           <div className="mt-4 pt-4 border-t border-dashed border-[#c3afb7]/30 space-y-2">
             <div className="flex justify-between text-sm text-[#c3afb7] font-medium">
-              <span>Subtotal</span>
+              <span>Subtotal (Inc. 10%)</span>
               <span className="text-white">₱{subtotal.toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm text-[#c3afb7] font-medium">
@@ -408,9 +415,7 @@ export default function Checkout() {
 
           {/* The Disclaimer Notice */}
           <div className="mt-6 bg-[#c3afb7]/10 border border-[#c3afb7]/30 text-[#c3afb7] text-xs font-medium p-4 rounded-lg">
-            <strong className="text-white">Notice:</strong> Exceptionally large
-            bulk orders may be subject to 4-wheel vehicle delivery rates. We
-            will contact you to confirm any adjustments before proceeding.
+            <strong className="text-white">Notice:</strong> Prices include a 10% personal shopping/service markup. Exceptionally large bulk orders may be subject to 4-wheel vehicle delivery rates. We will contact you to confirm any adjustments before proceeding.
           </div>
 
           {/* Select Ordering Platform */}
