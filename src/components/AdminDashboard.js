@@ -22,6 +22,7 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
 
   const [selectedImage, setSelectedImage] = useState(null);
   const [filterBrand, setFilterBrand] = useState("All");
+  const [autoOpenWhatsApp, setAutoOpenWhatsApp] = useState(false); // Default to false so it's optional and non-intrusive!
 
   // --- NEW: Product Manager States (Sliding Form) ---
   const [isSaving, setIsSaving] = useState(false);
@@ -355,6 +356,20 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       }
     } catch (error) {
       console.error("Error:", error);
+    }
+  };
+
+  const handleStatusUpdateWithWhatsApp = (order, newStatus) => {
+    // 1. Always update the status in UI/Database first
+    updateOrderStatus(order.id, newStatus);
+
+    // 2. Only open WhatsApp if the toggle is turned ON
+    if (autoOpenWhatsApp && order.phone) {
+      const message = `Hi ${order.name}, update on your SwiftBag order: Your status is now *${newStatus}*. Thank you for choosing SwiftBag! 🛵✨`;
+      const encoded = encodeURIComponent(message);
+      window.open(`https://wa.me/${order.phone}?text=${encoded}`, "_blank");
+    } else {
+      toast.success(`Order status updated to "${newStatus}"!`);
     }
   };
 
@@ -790,7 +805,6 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
               </div>
             )}
 
-
             {/* INVENTORY TABLE */}
             <div className="w-full max-w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto block">
               <table className="w-full min-w-full text-left border-collapse whitespace-nowrap">
@@ -946,33 +960,64 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
         {/* TAB B: LIVE ORDERS                     */}
         {/* -------------------------------------- */}
         {activeTab === "orders" && (
-          <div className="w-full block">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-              <h1 className="text-3xl font-bold text-gray-800">
-                {orderView === "active" ? "Active Orders" : "Order History"}
-              </h1>
+          <div className="w-full space-y-6">
+            {/* HEADER BAR: Title + Compact Actions */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-gray-200">
+              <div>
+                <h1 className="text-2xl font-black text-gray-900 tracking-tight flex items-center gap-2">
+                  {orderView === "active" ? "Active Orders" : "Order History"}
+                  <span className="text-xs px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 font-bold border border-blue-200">
+                    {displayedOrders.length} total
+                  </span>
+                </h1>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Manage live dispatch, driver notifications, and delivery
+                  fulfillment.
+                </p>
+              </div>
 
-              <div className="bg-gray-100 p-1 rounded-lg flex gap-1">
-                <button
-                  onClick={() => setOrderView("active")}
-                  className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${
-                    orderView === "active"
-                      ? "bg-white text-gray-900 shadow-sm border border-gray-200"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                  }`}
-                >
-                  🟢 Active Board
-                </button>
-                <button
-                  onClick={() => setOrderView("history")}
-                  className={`px-4 py-2 rounded-md text-sm font-bold transition-all ${
-                    orderView === "history"
-                      ? "bg-white text-gray-900 shadow-sm border border-gray-200"
-                      : "text-gray-500 hover:text-gray-700 hover:bg-gray-200/50"
-                  }`}
-                >
-                  📁 History
-                </button>
+              <div className="flex flex-wrap items-center gap-3">
+                {/* COMPACT WHATSAPP TOGGLE */}
+                <label className="flex items-center gap-2.5 bg-white border border-gray-200 shadow-sm px-3.5 py-1.5 rounded-xl cursor-pointer hover:border-gray-300 transition-all select-none">
+                  <span className="text-xs font-semibold text-gray-700 flex items-center gap-1.5">
+                    <span
+                      className={`w-2 h-2 rounded-full ${autoOpenWhatsApp ? "bg-emerald-500 animate-pulse" : "bg-gray-300"}`}
+                    />
+                    Auto WhatsApp
+                  </span>
+                  <input
+                    type="checkbox"
+                    checked={autoOpenWhatsApp}
+                    onChange={(e) => setAutoOpenWhatsApp(e.target.checked)}
+                    className="sr-only peer"
+                  />
+                  <div className="w-8 h-4.5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3.5 after:w-3.5 after:transition-all peer-checked:bg-emerald-500 relative" />
+                </label>
+
+                {/* VIEW SWITCHER SEGMENTED CONTROL */}
+                <div className="bg-gray-100 p-1 rounded-xl flex gap-1 border border-gray-200 shadow-inner">
+                  <button
+                    onClick={() => setOrderView("active")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      orderView === "active"
+                        ? "bg-white text-gray-900 shadow-sm font-black"
+                        : "text-gray-500 hover:text-gray-900"
+                    }`}
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                    Active Board
+                  </button>
+                  <button
+                    onClick={() => setOrderView("history")}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                      orderView === "history"
+                        ? "bg-white text-gray-900 shadow-sm font-black"
+                        : "text-gray-500 hover:text-gray-900"
+                    }`}
+                  >
+                    📁 History
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1374,16 +1419,17 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
       {selectedOrder && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg relative max-h-[90vh] flex flex-col animate-fade-in">
-            
             {/* Header */}
             <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
               <div>
-                <h2 className="text-xl font-black text-gray-800">Order #{selectedOrder.id}</h2>
+                <h2 className="text-xl font-black text-gray-800">
+                  Order #{selectedOrder.id}
+                </h2>
                 <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">
                   {selectedOrder.status || "Active"}
                 </span>
               </div>
-              <button 
+              <button
                 onClick={() => setSelectedOrder(null)}
                 className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
               >
@@ -1393,13 +1439,18 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
 
             {/* Scrollable Body */}
             <div className="p-5 overflow-y-auto">
-              
               {/* Customer Details */}
               <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-6">
-                <p className="font-bold text-gray-800 text-lg">{selectedOrder.customer_name}</p>
-                <p className="text-sm text-gray-600 mt-1">📞 {selectedOrder.customer_phone}</p>
-                <p className="text-sm text-gray-600 mt-1">📍 {selectedOrder.customer_address}</p>
-                
+                <p className="font-bold text-gray-800 text-lg">
+                  {selectedOrder.customer_name}
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  📞 {selectedOrder.customer_phone}
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  📍 {selectedOrder.customer_address}
+                </p>
+
                 {/* Custom Pabili Notes (if any) */}
                 {selectedOrder.notes && (
                   <p className="text-sm text-amber-700 bg-amber-50 p-3 rounded-lg mt-3 border border-amber-200 font-medium">
@@ -1421,28 +1472,35 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
                 {(() => {
                   let items = [];
                   try {
-                    items = typeof selectedOrder.cart_items === 'string' 
-                      ? JSON.parse(selectedOrder.cart_items) 
-                      : selectedOrder.cart_items || [];
-                  } catch(e) { 
-                    items = []; 
+                    items =
+                      typeof selectedOrder.cart_items === "string"
+                        ? JSON.parse(selectedOrder.cart_items)
+                        : selectedOrder.cart_items || [];
+                  } catch (e) {
+                    items = [];
                   }
 
                   if (items.length === 0) {
-                    return <p className="text-sm text-gray-500 italic">No cart items found.</p>;
+                    return (
+                      <p className="text-sm text-gray-500 italic">
+                        No cart items found.
+                      </p>
+                    );
                   }
 
                   return items.map((item, idx) => (
-                    <label 
-                      key={idx} 
+                    <label
+                      key={idx}
                       className="flex items-start gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg cursor-pointer hover:bg-blue-50 hover:border-blue-200 transition-colors"
                     >
-                      <input 
-                        type="checkbox" 
-                        className="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300 cursor-pointer" 
+                      <input
+                        type="checkbox"
+                        className="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-blue-500 border-gray-300 cursor-pointer"
                       />
                       <div className="flex-1">
-                        <p className="font-bold text-gray-800 text-sm">{item.name}</p>
+                        <p className="font-bold text-gray-800 text-sm">
+                          {item.name}
+                        </p>
                         <p className="text-xs text-gray-500 font-medium">
                           Qty: {item.quantity} | ₱{item.price}
                         </p>
@@ -1455,22 +1513,24 @@ export default function AdminDashboard({ allProducts, allOrders = [] }) {
 
             {/* Footer Actions */}
             <div className="p-5 border-t border-gray-100 flex gap-3 bg-gray-50 rounded-b-2xl">
-              <button 
+              <button
                 onClick={() => setSelectedOrder(null)}
                 className="px-4 py-3 font-bold text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 flex-1 transition-colors shadow-sm"
               >
                 Close
               </button>
-              <button 
+              <button
                 onClick={() => {
-                   window.open(`https://wa.me/63${(selectedOrder.customer_phone || "").replace(/^0+/, "")}`, "_blank");
+                  window.open(
+                    `https://wa.me/63${(selectedOrder.customer_phone || "").replace(/^0+/, "")}`,
+                    "_blank",
+                  );
                 }}
                 className="px-4 py-3 font-bold text-white bg-[#25D366] hover:bg-[#1ebd5b] rounded-lg flex-1 transition-colors shadow-md flex items-center justify-center gap-2"
               >
                 💬 WhatsApp
               </button>
             </div>
-
           </div>
         </div>
       )}
